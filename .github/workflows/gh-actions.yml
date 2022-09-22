@@ -7,6 +7,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    env:
+        QC_TEMPLATE_BROKERAGE_KEY: ${{ secrets.QC_TEMPLATE_BROKERAGE_KEY }}
+        QC_TEMPLATE_BROKERAGE_SECRET: ${{ secrets.QC_TEMPLATE_BROKERAGE_SECRET }}
     container:
         image: quantconnect/lean:foundation
     steps:
