@@ -8,13 +8,13 @@
         <Copyright>Copyright ©  2021</Copyright>
         <OutputPath>bin\$(Configuration)\</OutputPath>
         <Product>QuantConnect.TemplateBrokerage.ToolBox</Product>
-        <AssemblyName>QuantConnect.TemplateBrokerage.ToolBox</AssemblyName>
         <RootNamespace>QuantConnect.TemplateBrokerage.ToolBox</RootNamespace>
         <AssemblyTitle>QuantConnect.TemplateBrokerage.ToolBox</AssemblyTitle>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <Description>QuantConnect LEAN Template Brokerage: Brokerage Template toolbox plugin for Lean</Description>
+        <PackageId>QuantConnect.RBI.ToolBox</PackageId>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <DebugType>full</DebugType>
