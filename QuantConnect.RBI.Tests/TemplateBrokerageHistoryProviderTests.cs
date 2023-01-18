@@ -51,7 +51,7 @@ namespace QuantConnect.RBI.Tests
         {
             TestDelegate test = () =>
             {
-                var brokerage = new TemplateBrokerage(null);
+                var brokerage = new RBIBrokerage(null);
 
                 var historyProvider = new BrokerageHistoryProvider();
                 historyProvider.SetBrokerage(brokerage);

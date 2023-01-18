@@ -43,7 +43,7 @@ namespace QuantConnect.RBI.Tests
         public void StreamsData(Symbol symbol, Resolution resolution, bool throwsException)
         {
             var cancelationToken = new CancellationTokenSource();
-            var brokerage = (TemplateBrokerage)Brokerage;
+            var brokerage = (RBIBrokerage)Brokerage;
 
             SubscriptionDataConfig[] configs;
             if (resolution == Resolution.Tick)

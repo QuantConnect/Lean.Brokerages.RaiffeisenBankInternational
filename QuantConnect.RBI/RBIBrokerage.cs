@@ -26,8 +26,8 @@ using System.Collections.Generic;
 
 namespace QuantConnect.RBI
 {
-    [BrokerageFactory(typeof(TemplateBrokerageFactory))]
-    public class TemplateBrokerage : Brokerage, IDataQueueHandler, IDataQueueUniverseProvider
+    [BrokerageFactory(typeof(RBIBrokerageFactory))]
+    public class RBIBrokerage : Brokerage, IDataQueueHandler, IDataQueueUniverseProvider
     {
         private readonly IDataAggregator _aggregator;
         private readonly EventBasedDataQueueHandlerSubscriptionManager _subscriptionManager;
@@ -41,7 +41,7 @@ namespace QuantConnect.RBI
         /// Parameterless constructor for brokerage
         /// </summary>
         /// <remarks>This parameterless constructor is required for brokerages implementing <see cref="IDataQueueHandler"/></remarks>
-        public TemplateBrokerage()
+        public RBIBrokerage()
             : this(Composer.Instance.GetPart<IDataAggregator>())
         {
         }
@@ -50,7 +50,7 @@ namespace QuantConnect.RBI
          /// Creates a new instance
          /// </summary>
         /// <param name="aggregator">consolidate ticks</param>
-        public TemplateBrokerage(IDataAggregator aggregator) : base("TemplateBrokerage")
+        public RBIBrokerage(IDataAggregator aggregator) : base("TemplateBrokerage")
         {
             _aggregator = aggregator;
             _subscriptionManager = new EventBasedDataQueueHandlerSubscriptionManager();

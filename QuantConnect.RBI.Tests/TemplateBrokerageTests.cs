@@ -14,32 +14,27 @@
 */
 
 using NUnit.Framework;
+using QuantConnect.Configuration;
 using QuantConnect.Tests;
 using QuantConnect.Interfaces;
+using QuantConnect.RBI.Fix;
+using QuantConnect.RBI.Fix.Core.Implementations;
 using QuantConnect.Securities;
 using QuantConnect.Tests.Brokerages;
+using QuickFix;
 
 namespace QuantConnect.RBI.Tests
 {
-    [TestFixture, Ignore("Not implemented")]
+    [TestFixture]
     public partial class TemplateBrokerageTests : BrokerageTests
     {
-        protected override Symbol Symbol { get; }
-        protected override SecurityType SecurityType { get; }
-
-        protected override IBrokerage CreateBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider)
+        private readonly FixConfiguration _fixConfiguration = new FixConfiguration
         {
-            throw new System.NotImplementedException();
-        }
-        protected override bool IsAsync()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        protected override decimal GetAskPrice(Symbol symbol)
-        {
-            throw new System.NotImplementedException();
-        }
+            SenderCompId = Config.Get("wex-sender-comp-id"),
+            TargetCompId = Config.Get("wex-target-comp-id"),
+            Host = Config.Get("wex-host"),
+            Port = Config.Get("wex-port")
+        };
 
 
         /// <summary>
@@ -56,47 +51,37 @@ namespace QuantConnect.RBI.Tests
                 new TestCaseData(new LimitIfTouchedOrderTestParameters(Symbols.BTCUSD, 10000m, 0.01m)).SetName("LimitIfTouchedOrder")
             };
         }
-
-        [Test, TestCaseSource(nameof(OrderParameters))]
-        public override void CancelOrders(OrderTestParameters parameters)
+        
+        [Test]
+        public void LogOn()
         {
-            base.CancelOrders(parameters);
+            var controller = new FixBrokerageController();
+            var messageHandler = new FixMessageHandler(_fixConfiguration, controller);
+
+            using var fixInstance = new FixInstance(messageHandler, _fixConfiguration);
+
+            fixInstance.Initialize();
+
+            var sessionId = new SessionID(_fixConfiguration.FixVersionString, _fixConfiguration.SenderCompId, _fixConfiguration.TargetCompId);
+
+            fixInstance.OnLogon(sessionId);
         }
 
-        [Test, TestCaseSource(nameof(OrderParameters))]
-        public override void LongFromZero(OrderTestParameters parameters)
+        protected override IBrokerage CreateBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider)
         {
-            base.LongFromZero(parameters);
+            throw new System.NotImplementedException();
         }
 
-        [Test, TestCaseSource(nameof(OrderParameters))]
-        public override void CloseFromLong(OrderTestParameters parameters)
+        protected override Symbol Symbol { get; }
+        protected override SecurityType SecurityType { get; }
+        protected override bool IsAsync()
         {
-            base.CloseFromLong(parameters);
+            throw new System.NotImplementedException();
         }
 
-        [Test, TestCaseSource(nameof(OrderParameters))]
-        public override void ShortFromZero(OrderTestParameters parameters)
+        protected override decimal GetAskPrice(Symbol symbol)
         {
-            base.ShortFromZero(parameters);
-        }
-
-        [Test, TestCaseSource(nameof(OrderParameters))]
-        public override void CloseFromShort(OrderTestParameters parameters)
-        {
-            base.CloseFromShort(parameters);
-        }
-
-        [Test, TestCaseSource(nameof(OrderParameters))]
-        public override void ShortFromLong(OrderTestParameters parameters)
-        {
-            base.ShortFromLong(parameters);
-        }
-
-        [Test, TestCaseSource(nameof(OrderParameters))]
-        public override void LongFromShort(OrderTestParameters parameters)
-        {
-            base.LongFromShort(parameters);
+            throw new System.NotImplementedException();
         }
     }
 }

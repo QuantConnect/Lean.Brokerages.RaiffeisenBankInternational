@@ -25,7 +25,7 @@ namespace QuantConnect.RBI.Tests
         [Test]
         public void InitializesFactoryFromComposer()
         {
-            using var factory = Composer.Instance.Single<IBrokerageFactory>(instance => instance.BrokerageType == typeof(TemplateBrokerage));
+            using var factory = Composer.Instance.Single<IBrokerageFactory>(instance => instance.BrokerageType == typeof(RBIBrokerage));
             Assert.IsNotNull(factory);
         }
     }

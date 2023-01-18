@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading;
 using QuantConnect.RBI.Fix.Core.Interfaces;
+using QuantConnect.Util;
 using QuickFix;
 using QuickFix.Transport;
 
@@ -12,6 +13,8 @@ public class FixInstance : IApplication, IDisposable
     private readonly IFixMessageHandler _messageHandler;
     private readonly FixConfiguration _config;
     private readonly SocketInitiator _initiator;
+
+    private bool _isDisposed = false;
 
     public FixInstance(IFixMessageHandler messageHandler, FixConfiguration config)
     {
@@ -78,7 +81,7 @@ public class FixInstance : IApplication, IDisposable
 
     public void OnLogout(SessionID sessionID)
     {
-        throw new NotImplementedException();
+        _messageHandler.OnLogout(sessionID);
     }
 
     public void OnLogon(SessionID sessionID)
@@ -88,6 +91,12 @@ public class FixInstance : IApplication, IDisposable
 
     public void Dispose()
     {
-        throw new NotImplementedException();
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        _initiator.DisposeSafely();
     }
 }
