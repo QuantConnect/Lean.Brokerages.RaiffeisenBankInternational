@@ -17,7 +17,7 @@ using NUnit.Framework;
 using QuantConnect.Util;
 using QuantConnect.Interfaces;
 
-namespace QuantConnect.TemplateBrokerage.Tests
+namespace QuantConnect.RBI.Tests
 {
     [TestFixture]
     public class TemplateBrokerageAdditionalTests

@@ -24,7 +24,7 @@ using QuantConnect.Securities;
 using QuantConnect.Brokerages;
 using System.Collections.Generic;
 
-namespace QuantConnect.TemplateBrokerage
+namespace QuantConnect.RBI
 {
     [BrokerageFactory(typeof(TemplateBrokerageFactory))]
     public class TemplateBrokerage : Brokerage, IDataQueueHandler, IDataQueueUniverseProvider

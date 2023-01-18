@@ -16,7 +16,7 @@
 using QuantConnect.ToolBox;
 using System.Collections.Generic;
 
-namespace QuantConnect.TemplateBrokerage.ToolBox
+namespace QuantConnect.RBI.ToolBox
 {
     /// <summary>
     /// Template Brokerage implementation of <see cref="IExchangeInfoDownloader"/>

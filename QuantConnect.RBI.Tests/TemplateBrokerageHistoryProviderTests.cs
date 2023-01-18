@@ -23,7 +23,7 @@ using QuantConnect.Securities;
 using QuantConnect.Data.Market;
 using QuantConnect.Lean.Engine.HistoricalData;
 
-namespace QuantConnect.TemplateBrokerage.Tests
+namespace QuantConnect.RBI.Tests
 {
     [TestFixture, Ignore("Not implemented")]
     public class TemplateBrokerageHistoryProviderTests
