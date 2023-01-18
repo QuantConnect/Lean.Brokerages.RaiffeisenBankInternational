@@ -83,7 +83,7 @@ public class FixInstance : IApplication, IDisposable
 
     public void OnLogon(SessionID sessionID)
     {
-        throw new NotImplementedException();
+        _messageHandler.OnLogon(sessionID);
     }
 
     public void Dispose()
