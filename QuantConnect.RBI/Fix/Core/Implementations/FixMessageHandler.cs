@@ -7,11 +7,12 @@ using QuickFix;
 
 namespace QuantConnect.RBI.Fix.Core.Implementations;
 
-public class FixMessageHandler : IFixMessageHandler
+public class FixMessageHandler : MessageCracker, IFixMessageHandler
 {
     private readonly FixConfiguration _config;
     private readonly IFixBrokerageController _brokerageController;
     private IFixSymbolController _fixSymbolController;
+    public bool IsReady { get; set; }
 
     public FixMessageHandler(FixConfiguration config, IFixBrokerageController brokerageController)
     {
@@ -19,16 +20,26 @@ public class FixMessageHandler : IFixMessageHandler
         _brokerageController = brokerageController;
     }
 
-    public bool AreSessionsReady()
+    public bool IsSessionReady()
     {
-        throw new System.NotImplementedException();
+        return IsReady;
     }
 
     public IMessageFactory MessageFactory { get; set; }
     
     public void Handle(Message message, SessionID sessionId)
     {
-        throw new System.NotImplementedException();
+        Crack(message, sessionId);
+    }
+    
+    public void OnRecoveryCompleted()
+    {
+        IsReady = true;
+    }
+
+    public void HandleAdminMessage(Message message, SessionID sessionId)
+    {
+        throw new NotImplementedException();
     }
 
     public void EnrichMessage(Message message)
@@ -42,7 +53,8 @@ public class FixMessageHandler : IFixMessageHandler
 
         if (sessionId.SenderCompID == _config.SenderCompId && sessionId.TargetCompID == _config.TargetCompId)
         {
-            _fixSymbolController = new FixSymbolController();
+            _fixSymbolController = new FixSymbolController(new RBIFixConnection(sessionId));
+            _brokerageController.Register(_fixSymbolController);
         }
         else
         {
@@ -52,6 +64,14 @@ public class FixMessageHandler : IFixMessageHandler
 
     public void OnLogout(SessionID sessionId)
     {
-        throw new System.NotImplementedException();
+        if (sessionId.SenderCompID == _config.SenderCompId && sessionId.TargetCompID == _config.TargetCompId)
+        {
+            _brokerageController.Unregister(_fixSymbolController);
+        }
+    }
+
+    public void OnMessage(Message message, SessionID sessionId)
+    {
+        Logging.Log.Trace($"Sending message {message.GetType().Name}");
     }
 }

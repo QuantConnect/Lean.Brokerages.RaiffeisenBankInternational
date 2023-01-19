@@ -4,11 +4,13 @@ namespace QuantConnect.RBI.Fix.Core.Interfaces;
 
 public interface IFixMessageHandler
 {
-    bool AreSessionsReady();
+    bool IsSessionReady();
     
     IMessageFactory MessageFactory { get; set; }
 
     void Handle(Message message, SessionID sessionId);
+
+    void HandleAdminMessage(Message message, SessionID sessionId);
 
     void EnrichMessage(Message message);
 

@@ -13,15 +13,19 @@
  * limitations under the License.
 */
 
+using System;
 using NUnit.Framework;
 using QuantConnect.Configuration;
 using QuantConnect.Tests;
 using QuantConnect.Interfaces;
+using QuantConnect.Orders;
 using QuantConnect.RBI.Fix;
 using QuantConnect.RBI.Fix.Core.Implementations;
 using QuantConnect.Securities;
 using QuantConnect.Tests.Brokerages;
 using QuickFix;
+using QuickFix.Fields;
+using QuickFix.FIX42;
 
 namespace QuantConnect.RBI.Tests
 {
@@ -65,6 +69,9 @@ namespace QuantConnect.RBI.Tests
             var sessionId = new SessionID(_fixConfiguration.FixVersionString, _fixConfiguration.SenderCompId, _fixConfiguration.TargetCompId);
 
             fixInstance.OnLogon(sessionId);
+
+            var order = new MarketOrder(Symbol.Create("IBM", SecurityType.Equity, Market.USA), -1, DateTime.UtcNow);
+            controller.PlaceOrder(order);
         }
 
         protected override IBrokerage CreateBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider)

@@ -23,12 +23,17 @@ using QuantConnect.Interfaces;
 using QuantConnect.Securities;
 using QuantConnect.Brokerages;
 using System.Collections.Generic;
+using QuantConnect.RBI.Fix;
+using QuantConnect.RBI.Fix.Core.Implementations;
+using QuantConnect.RBI.Fix.Core.Interfaces;
 
 namespace QuantConnect.RBI
 {
     [BrokerageFactory(typeof(RBIBrokerageFactory))]
     public class RBIBrokerage : Brokerage, IDataQueueHandler, IDataQueueUniverseProvider
     {
+        private readonly IFixBrokerageController _fixBrokerageController;
+
         private readonly IDataAggregator _aggregator;
         private readonly EventBasedDataQueueHandlerSubscriptionManager _subscriptionManager;
 
@@ -50,7 +55,7 @@ namespace QuantConnect.RBI
          /// Creates a new instance
          /// </summary>
         /// <param name="aggregator">consolidate ticks</param>
-        public RBIBrokerage(IDataAggregator aggregator) : base("TemplateBrokerage")
+        public RBIBrokerage(IDataAggregator aggregator) : base("RBIBrokerage")
         {
             _aggregator = aggregator;
             _subscriptionManager = new EventBasedDataQueueHandlerSubscriptionManager();
@@ -146,7 +151,7 @@ namespace QuantConnect.RBI
         /// <returns>True if the request for a new order has been placed, false otherwise</returns>
         public override bool PlaceOrder(Order order)
         {
-            throw new NotImplementedException();
+            return _fixBrokerageController.PlaceOrder(order);
         }
 
         /// <summary>

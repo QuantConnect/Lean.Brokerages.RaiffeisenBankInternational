@@ -1,5 +1,7 @@
 ﻿using System;
+using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Core.Interfaces;
+using QuickFix.FIX42;
 
 namespace QuantConnect.RBI.Fix.Core.Implementations;
 
@@ -42,5 +44,16 @@ public class FixBrokerageController : IFixBrokerageController
     public void Unsubscribe(Symbol symbol)
     {
         throw new System.NotImplementedException();
+    }
+
+    //change to order
+    public bool PlaceOrder(Order order)
+    {
+        if (_symbolController == null)
+        {
+            throw new ArgumentNullException($"Handler has not been registered");
+        }
+        
+        return _symbolController.PlaceOrder(order);
     }
 }

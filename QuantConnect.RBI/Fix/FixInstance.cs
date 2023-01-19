@@ -8,7 +8,7 @@ using QuickFix.Transport;
 
 namespace QuantConnect.RBI.Fix;
 
-public class FixInstance : IApplication, IDisposable
+public class FixInstance : MessageCracker, IApplication, IDisposable
 {
     private readonly IFixMessageHandler _messageHandler;
     private readonly FixConfiguration _config;
@@ -42,7 +42,7 @@ public class FixInstance : IApplication, IDisposable
             _initiator.Start();
 
             var startTime = DateTime.UtcNow;
-            while (!IsConnected() || !_messageHandler.AreSessionsReady())
+            while (!IsConnected() || !_messageHandler.IsSessionReady())
             {
                 if (DateTime.UtcNow > startTime.AddSeconds(60))
                 {
@@ -61,7 +61,6 @@ public class FixInstance : IApplication, IDisposable
 
     public void FromAdmin(Message message, SessionID sessionID)
     {
-        throw new NotImplementedException();
     }
 
     public void ToApp(Message message, SessionID sessionID)
