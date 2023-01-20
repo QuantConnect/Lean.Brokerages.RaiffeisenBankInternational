@@ -34,21 +34,48 @@ public class FixSymbolController : IFixSymbolController
         var ticker = _symbolMapper.GetBrokerageSymbol(order.Symbol);
 
         var securityType = new QuickFix.Fields.SecurityType(_symbolMapper.GetBrokerageSecurityType(order.Symbol.SecurityType));
+
+        var side = new Side(order.Direction == OrderDirection.Buy ? Side.BUY : Side.SELL);
         
         var newOrder = new NewOrderSingle()
         {
             ClOrdID = new ClOrdID(order.Id.ToString()),
-            HandlInst = new HandlInst(HandlInst.AUTOMATED_EXECUTION_ORDER_PUBLIC_BROKER_INTERVENTION_OK),
+            HandlInst = new HandlInst(HandlInst.AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION),
             Symbol = new QuickFix.Fields.Symbol(ticker),
-            Side = new Side(Side.BUY),
-            //TransactTime = new TransactTime(DateTime.UtcNow),
-            OrdType = new OrdType(OrdType.LIMIT),
+            Side = side,
+            TransactTime = new TransactTime(DateTime.UtcNow),
+            OrderQty = new OrderQty(order.Quantity),
             SecurityType = securityType
         };
-        
-        newOrder.Set(new OrderQty(order.Quantity));
-        newOrder.Set(new Price(order.Price));
-        
+
+        switch (order.Type)
+        {
+            case OrderType.Limit:
+                newOrder.OrdType = new OrdType(OrdType.LIMIT);
+                newOrder.Price = new Price(((LimitOrder) order).LimitPrice);
+                break;
+            
+            case OrderType.Market:
+                newOrder.OrdType = new OrdType(OrdType.MARKET);
+                break;
+            
+            case OrderType.StopLimit:
+                newOrder.OrdType = new OrdType(OrdType.STOP_LIMIT);
+                newOrder.Price = new Price(((StopLimitOrder) order).LimitPrice);
+                newOrder.StopPx = new StopPx(((StopLimitOrder) order).StopPrice);
+                break;
+            
+            case OrderType.StopMarket:
+                newOrder.OrdType = new OrdType(OrdType.STOP);
+                newOrder.StopPx = new StopPx(((StopMarketOrder) order).StopPrice);
+                break;
+            
+            // add market on limit
+            default:
+                Logging.Log.Trace($"RBI doesn't support this Order Type: {nameof(order.Type)}");
+                break;
+        }
+
         Log.Trace($"FixSymbolController.PlaceOrder(): sending order {order.Id}...");
         _session.Send(newOrder);
         return newOrder;
