@@ -9,5 +9,5 @@ public interface IFixSymbolController
 
     bool UnsubscribeFromSymbol(Symbol symbol);
 
-    bool PlaceOrder(Order order);
+    NewOrderSingle PlaceOrder(Order order);
 }

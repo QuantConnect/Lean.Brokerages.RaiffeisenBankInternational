@@ -30,7 +30,7 @@ using QuantConnect.RBI.Fix.Core.Interfaces;
 namespace QuantConnect.RBI
 {
     [BrokerageFactory(typeof(RBIBrokerageFactory))]
-    public class RBIBrokerage : Brokerage, IDataQueueHandler, IDataQueueUniverseProvider
+    public class RBIBrokerage : Brokerage
     {
         private readonly IFixBrokerageController _fixBrokerageController;
 
@@ -58,22 +58,19 @@ namespace QuantConnect.RBI
         public RBIBrokerage(IDataAggregator aggregator) : base("RBIBrokerage")
         {
             _aggregator = aggregator;
-            _subscriptionManager = new EventBasedDataQueueHandlerSubscriptionManager();
-            _subscriptionManager.SubscribeImpl += (s, t) => Subscribe(s);
-            _subscriptionManager.UnsubscribeImpl += (s, t) => Unsubscribe(s);
-
+        
             // Useful for some brokerages:
-
+        
             // Brokerage helper class to lock websocket message stream while executing an action, for example placing an order
             // avoid race condition with placing an order and getting filled events before finished placing
             // _messageHandler = new BrokerageConcurrentMessageHandler<>();
-
+        
             // Rate gate limiter useful for API/WS calls
             // _connectionRateLimiter = new RateGate();
         }
 
         #region IDataQueueHandler
-
+        
         /// <summary>
         /// Subscribe to the specified configuration
         /// </summary>
@@ -86,13 +83,13 @@ namespace QuantConnect.RBI
             {
                 return null;
             }
-
+        
             var enumerator = _aggregator.Add(dataConfig, newDataAvailableHandler);
             _subscriptionManager.Subscribe(dataConfig);
-
+        
             return enumerator;
         }
-
+        
         /// <summary>
         /// Removes the specified configuration
         /// </summary>
@@ -102,7 +99,7 @@ namespace QuantConnect.RBI
             _subscriptionManager.Unsubscribe(dataConfig);
             _aggregator.Remove(dataConfig);
         }
-
+        
         /// <summary>
         /// Sets the job we're subscribing for
         /// </summary>
@@ -111,11 +108,11 @@ namespace QuantConnect.RBI
         {
             throw new NotImplementedException();
         }
-
+        
         #endregion
-
+        
         #region Brokerage
-
+        
         /// <summary>
         /// Gets all open orders on the account.
         /// NOTE: The order objects returned do not have QC order IDs.
@@ -125,7 +122,7 @@ namespace QuantConnect.RBI
         {
             throw new NotImplementedException();
         }
-
+        
         /// <summary>
         /// Gets all holdings for the account
         /// </summary>
@@ -134,7 +131,7 @@ namespace QuantConnect.RBI
         {
             throw new NotImplementedException();
         }
-
+        
         /// <summary>
         /// Gets the current cash balance for each currency held in the brokerage account
         /// </summary>
@@ -143,7 +140,7 @@ namespace QuantConnect.RBI
         {
             throw new NotImplementedException();
         }
-
+        
         /// <summary>
         /// Places a new order and assigns a new broker ID to the order
         /// </summary>
@@ -151,9 +148,9 @@ namespace QuantConnect.RBI
         /// <returns>True if the request for a new order has been placed, false otherwise</returns>
         public override bool PlaceOrder(Order order)
         {
-            return _fixBrokerageController.PlaceOrder(order);
+            throw new NotImplementedException();
         }
-
+        
         /// <summary>
         /// Updates the order with the same id
         /// </summary>
@@ -163,7 +160,7 @@ namespace QuantConnect.RBI
         {
             throw new NotImplementedException();
         }
-
+        
         /// <summary>
         /// Cancels the order with the specified ID
         /// </summary>
@@ -173,7 +170,7 @@ namespace QuantConnect.RBI
         {
             throw new NotImplementedException();
         }
-
+        
         /// <summary>
         /// Connects the client to the broker's remote servers
         /// </summary>
@@ -181,7 +178,7 @@ namespace QuantConnect.RBI
         {
             throw new NotImplementedException();
         }
-
+        
         /// <summary>
         /// Disconnects the client from the broker's remote servers
         /// </summary>
@@ -189,11 +186,11 @@ namespace QuantConnect.RBI
         {
             throw new NotImplementedException();
         }
-
+        
         #endregion
-
+        
         #region IDataQueueUniverseProvider
-
+        
         /// <summary>
         /// Method returns a collection of Symbols that are available at the data source.
         /// </summary>
@@ -205,7 +202,7 @@ namespace QuantConnect.RBI
         {
             throw new NotImplementedException();
         }
-
+        
         /// <summary>
         /// Returns whether selection can take place or not.
         /// </summary>
@@ -216,19 +213,19 @@ namespace QuantConnect.RBI
         {
             throw new NotImplementedException();
         }
-
+        
         #endregion
-
+        
         private bool CanSubscribe(Symbol symbol)
         {
             if (symbol.Value.IndexOfInvariant("universe", true) != -1 || symbol.IsCanonical())
             {
                 return false;
             }
-
+        
             throw new NotImplementedException();
         }
-
+        
         /// <summary>
         /// Adds the specified symbols to the subscription
         /// </summary>
@@ -237,7 +234,7 @@ namespace QuantConnect.RBI
         {
             throw new NotImplementedException();
         }
-
+        
         /// <summary>
         /// Removes the specified symbols to the subscription
         /// </summary>

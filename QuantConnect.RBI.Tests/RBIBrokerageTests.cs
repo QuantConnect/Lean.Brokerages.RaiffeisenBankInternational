@@ -30,14 +30,14 @@ using QuickFix.FIX42;
 namespace QuantConnect.RBI.Tests
 {
     [TestFixture]
-    public partial class TemplateBrokerageTests : BrokerageTests
+    public partial class RBIBrokerageTests : BrokerageTests
     {
-        private readonly FixConfiguration _fixConfiguration = new FixConfiguration
+        private readonly FixConfiguration _fixConfiguration = new()
         {
-            SenderCompId = Config.Get("wex-sender-comp-id"),
-            TargetCompId = Config.Get("wex-target-comp-id"),
-            Host = Config.Get("wex-host"),
-            Port = Config.Get("wex-port")
+            SenderCompId = "CLIENT1",
+            TargetCompId = "SIMPLE",
+            Host = "127.0.0.1",
+            Port = 5080
         };
 
 
@@ -57,7 +57,7 @@ namespace QuantConnect.RBI.Tests
         }
         
         [Test]
-        public void LogOn()
+        public void PlaceOrder()
         {
             var controller = new FixBrokerageController();
             var messageHandler = new FixMessageHandler(_fixConfiguration, controller);
@@ -66,12 +66,30 @@ namespace QuantConnect.RBI.Tests
 
             fixInstance.Initialize();
 
+
             var sessionId = new SessionID(_fixConfiguration.FixVersionString, _fixConfiguration.SenderCompId, _fixConfiguration.TargetCompId);
 
             fixInstance.OnLogon(sessionId);
 
-            var order = new MarketOrder(Symbol.Create("IBM", SecurityType.Equity, Market.USA), -1, DateTime.UtcNow);
-            controller.PlaceOrder(order);
+            var order = new MarketOrder(Symbol.Create("DLF", SecurityType.Equity, Market.USA), 1, DateTime.UtcNow, 10);
+
+            var actual = controller.PlaceOrder(order);
+            
+            var expected =  new NewOrderSingle()
+            {
+                ClOrdID = new ClOrdID(order.Id.ToString()),
+                HandlInst = new HandlInst(HandlInst.AUTOMATED_EXECUTION_ORDER_PUBLIC_BROKER_INTERVENTION_OK),
+                Symbol = new QuickFix.Fields.Symbol("DLF"),
+                Side = new Side(Side.BUY),
+                //TransactTime = new TransactTime(DateTime.UtcNow),
+                OrdType = new OrdType(OrdType.LIMIT),
+                SecurityType = new QuickFix.Fields.SecurityType("CS")
+            };
+            
+            expected.Set(new OrderQty(order.Quantity));
+            expected.Set(new Price(order.Price));
+            
+            Assert.AreEqual(expected, actual);
         }
 
         protected override IBrokerage CreateBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider)

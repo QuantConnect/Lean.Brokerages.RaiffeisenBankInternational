@@ -5,6 +5,7 @@ using QuantConnect.RBI.Fix.Core.Interfaces;
 using QuantConnect.Util;
 using QuickFix;
 using QuickFix.Transport;
+using Message = QuickFix.Message;
 
 namespace QuantConnect.RBI.Fix;
 
@@ -23,8 +24,10 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 
         var settings = _config.GetDefaultSessionSettings();
         var storeFactory = new FileStoreFactory(settings);
+        ScreenLogFactory logFactory = new ScreenLogFactory(settings); 
+        var messageFactory = new DefaultMessageFactory(); 
 
-        _initiator = new SocketInitiator(this, storeFactory, settings);
+        _initiator = new SocketInitiator(this, storeFactory, settings, logFactory, messageFactory);
     }
     
     public bool IsConnected()
@@ -37,45 +40,33 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 
     public void Initialize()
     {
-        if (_initiator.IsStopped)
-        {
-            _initiator.Start();
-
-            var startTime = DateTime.UtcNow;
-            while (!IsConnected() || !_messageHandler.IsSessionReady())
-            {
-                if (DateTime.UtcNow > startTime.AddSeconds(60))
-                {
-                    throw new TimeoutException("Timeout initializing FIX sessions.");
-                }
-
-                Thread.Sleep(1000);
-            }
-        }
+        _initiator.Start();
+        Thread.Sleep(3000);
     }
 
     public void ToAdmin(Message message, SessionID sessionID)
     {
-        throw new NotImplementedException();
+        Console.WriteLine("toadmin");
     }
 
     public void FromAdmin(Message message, SessionID sessionID)
     {
+        Console.WriteLine("fromadmin");
     }
 
     public void ToApp(Message message, SessionID sessionID)
     {
-        throw new NotImplementedException();
+        Console.WriteLine("toapp");
     }
 
     public void FromApp(Message message, SessionID sessionID)
     {
-        throw new NotImplementedException();
+        Console.WriteLine("fromapp");
     }
 
     public void OnCreate(SessionID sessionID)
     {
-        throw new NotImplementedException();
+        Console.WriteLine("oncreate");
     }
 
     public void OnLogout(SessionID sessionID)

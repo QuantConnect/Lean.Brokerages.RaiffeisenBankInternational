@@ -23,7 +23,7 @@ using QuantConnect.Data.Market;
 namespace QuantConnect.RBI.Tests
 {
     [TestFixture]
-    public partial class TemplateBrokerageTests
+    public partial class RBIBrokerageTests
     {
         private static TestCaseData[] TestParameters
         {
