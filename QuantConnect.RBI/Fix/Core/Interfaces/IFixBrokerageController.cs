@@ -14,4 +14,6 @@ public interface IFixBrokerageController
     void Unsubscribe(Symbol symbol);
 
     NewOrderSingle PlaceOrder(Order order);
+
+    bool CancelOrder(Order order);
 }

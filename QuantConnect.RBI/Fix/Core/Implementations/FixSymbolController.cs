@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using QuantConnect.Logging;
 using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Connection.Interfaces;
@@ -39,7 +40,7 @@ public class FixSymbolController : IFixSymbolController
         
         var newOrder = new NewOrderSingle()
         {
-            ClOrdID = new ClOrdID(order.Id.ToString()),
+            ClOrdID = new ClOrdID(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)),
             HandlInst = new HandlInst(HandlInst.AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION),
             Symbol = new QuickFix.Fields.Symbol(ticker),
             Side = side,
@@ -77,7 +78,17 @@ public class FixSymbolController : IFixSymbolController
         }
 
         Log.Trace($"FixSymbolController.PlaceOrder(): sending order {order.Id}...");
+        order.BrokerId.Add(newOrder.ClOrdID.getValue());
         _session.Send(newOrder);
         return newOrder;
+    }
+
+    public bool CancelOrder(Order order)
+    {
+        return _session.Send(new OrderCancelRequest
+        {
+            ClOrdID = new ClOrdID(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)),
+            OrigClOrdID = new OrigClOrdID(order.BrokerId[0])
+        });
     }
 }

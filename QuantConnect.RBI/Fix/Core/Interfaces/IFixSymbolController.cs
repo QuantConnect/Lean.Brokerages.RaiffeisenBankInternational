@@ -10,4 +10,6 @@ public interface IFixSymbolController
     bool UnsubscribeFromSymbol(Symbol symbol);
 
     NewOrderSingle PlaceOrder(Order order);
+
+    bool CancelOrder(Order order);
 }
