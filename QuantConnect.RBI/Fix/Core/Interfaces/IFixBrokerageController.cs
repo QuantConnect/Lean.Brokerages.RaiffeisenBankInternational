@@ -16,4 +16,6 @@ public interface IFixBrokerageController
     NewOrderSingle PlaceOrder(Order order);
 
     bool CancelOrder(Order order);
+
+    OrderCancelReplaceRequest UpdateOrder(Order order);
 }

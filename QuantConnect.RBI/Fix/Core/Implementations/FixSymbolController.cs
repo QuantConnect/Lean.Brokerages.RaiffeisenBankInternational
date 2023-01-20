@@ -91,4 +91,52 @@ public class FixSymbolController : IFixSymbolController
             OrigClOrdID = new OrigClOrdID(order.BrokerId[0])
         });
     }
+
+    public OrderCancelReplaceRequest UpdateOrder(Order order)
+    {
+        var request = new OrderCancelReplaceRequest
+        {
+            ClOrdID = new ClOrdID(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)),
+            OrigClOrdID = new OrigClOrdID(order.BrokerId[0]),
+            HandlInst = new HandlInst(HandlInst.AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION),
+            Symbol = new QuickFix.Fields.Symbol(order.Symbol.Value),
+            TransactTime = new TransactTime(order.Time),
+            OrderQty = new OrderQty(order.Quantity)
+        };
+        
+        var side = new Side(order.Direction == OrderDirection.Buy ? Side.BUY : Side.SELL);
+        request.Side = side;
+        
+        switch (order.Type)
+        {
+            case OrderType.Limit:
+                request.OrdType = new OrdType(OrdType.LIMIT);
+                request.Price = new Price(((LimitOrder) order).LimitPrice);
+                break;
+            
+            case OrderType.Market:
+                request.OrdType = new OrdType(OrdType.MARKET);
+                break;
+            
+            case OrderType.StopLimit:
+                request.OrdType = new OrdType(OrdType.STOP_LIMIT);
+                request.Price = new Price(((StopLimitOrder) order).LimitPrice);
+                request.StopPx = new StopPx(((StopLimitOrder) order).StopPrice);
+                break;
+            
+            case OrderType.StopMarket:
+                request.OrdType = new OrdType(OrdType.STOP);
+                request.StopPx = new StopPx(((StopMarketOrder) order).StopPrice);
+                break;
+            
+            // add market on limit
+            default:
+                Logging.Log.Trace($"RBI doesn't support this Order Type: {nameof(order.Type)}");
+                break;
+        }
+
+        _session.Send(request);
+
+        return request;
+    }
 }

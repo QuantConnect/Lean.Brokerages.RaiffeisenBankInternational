@@ -66,4 +66,14 @@ public class FixBrokerageController : IFixBrokerageController
         
         return _symbolController.CancelOrder(order);
     }
+
+    public OrderCancelReplaceRequest UpdateOrder(Order order)
+    {
+        if (_symbolController == null)
+        {
+            throw new ArgumentNullException($"Handler has not been registered");
+        }
+        
+        return _symbolController.UpdateOrder(order);
+    }
 }
