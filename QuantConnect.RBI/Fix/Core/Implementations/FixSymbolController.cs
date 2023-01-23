@@ -4,6 +4,7 @@ using QuantConnect.Logging;
 using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Connection.Interfaces;
 using QuantConnect.RBI.Fix.Core.Interfaces;
+using QuantConnect.Securities;
 using QuickFix.Fields;
 using QuickFix.FIX42;
 
@@ -37,7 +38,7 @@ public class FixSymbolController : IFixSymbolController
         var securityType = new QuickFix.Fields.SecurityType(_symbolMapper.GetBrokerageSecurityType(order.Symbol.SecurityType));
 
         var side = new Side(order.Direction == OrderDirection.Buy ? Side.BUY : Side.SELL);
-        
+
         var newOrder = new NewOrderSingle()
         {
             ClOrdID = new ClOrdID(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)),
@@ -46,8 +47,15 @@ public class FixSymbolController : IFixSymbolController
             Side = side,
             TransactTime = new TransactTime(DateTime.UtcNow),
             OrderQty = new OrderQty(order.Quantity),
-            SecurityType = securityType
+            SecurityType = securityType,
+            ExDestination = new ExDestination("DE"),
+            IDSource = new IDSource("4"),
+            //add isincode
+            //add timeinforce
+            Currency = new Currency(order.PriceCurrency)
+           
         };
+
 
         switch (order.Type)
         {
@@ -58,6 +66,7 @@ public class FixSymbolController : IFixSymbolController
             
             case OrderType.Market:
                 newOrder.OrdType = new OrdType(OrdType.MARKET);
+                newOrder.Price = new Price(((MarketOrder)order).Price);
                 break;
             
             case OrderType.StopLimit:

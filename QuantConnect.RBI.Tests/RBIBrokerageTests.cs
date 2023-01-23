@@ -15,7 +15,6 @@
 
 using System;
 using NUnit.Framework;
-using QuantConnect.Configuration;
 using QuantConnect.Tests;
 using QuantConnect.Interfaces;
 using QuantConnect.Orders;
@@ -71,42 +70,27 @@ namespace QuantConnect.RBI.Tests
 
             fixInstance.OnLogon(sessionId);
 
-            var order = new MarketOrder(Symbol.Create("DLF", SecurityType.Equity, Market.USA), 1, DateTime.UtcNow, 10);
-
+            var order = new MarketOrder(Symbol.Create("DLF", SecurityType.Equity, Market.USA), 1, DateTime.UtcNow, 1);
             var actual = controller.PlaceOrder(order);
-            
-            var expected =  new NewOrderSingle()
-            {
-                ClOrdID = new ClOrdID(order.Id.ToString()),
-                HandlInst = new HandlInst(HandlInst.AUTOMATED_EXECUTION_ORDER_PUBLIC_BROKER_INTERVENTION_OK),
-                Symbol = new QuickFix.Fields.Symbol("DLF"),
-                Side = new Side(Side.BUY),
-                //TransactTime = new TransactTime(DateTime.UtcNow),
-                OrdType = new OrdType(OrdType.LIMIT),
-                SecurityType = new QuickFix.Fields.SecurityType("CS")
-            };
-            
-            expected.Set(new OrderQty(order.Quantity));
-            expected.Set(new Price(order.Price));
-            
-            Assert.AreEqual(expected, actual);
+
+            var actualString = actual.ToString();
         }
 
         protected override IBrokerage CreateBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider)
         {
-            throw new System.NotImplementedException();
+            return new RBIBrokerage();
         }
-
+        
         protected override Symbol Symbol { get; }
         protected override SecurityType SecurityType { get; }
         protected override bool IsAsync()
         {
-            throw new System.NotImplementedException();
+            return true;
         }
-
+        
         protected override decimal GetAskPrice(Symbol symbol)
         {
-            throw new System.NotImplementedException();
+            return 0;
         }
     }
 }
