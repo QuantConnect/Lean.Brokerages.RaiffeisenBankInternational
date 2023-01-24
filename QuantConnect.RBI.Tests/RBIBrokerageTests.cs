@@ -56,7 +56,10 @@ namespace QuantConnect.RBI.Tests
         }
         
         [Test]
-        public void PlaceOrder()
+        [TestCase("AAPL",5, 500, Market.USA)]
+        [TestCase("DLF", 10, 10000, Market.Binance)]
+        [TestCase("GOOCV", 2, 230, Market.FTX)]
+        public void PlaceOrder(string ticker, decimal quantity, decimal price, string market)
         {
             var controller = new FixBrokerageController();
             var messageHandler = new FixMessageHandler(_fixConfiguration, controller);
@@ -70,10 +73,19 @@ namespace QuantConnect.RBI.Tests
 
             fixInstance.OnLogon(sessionId);
 
-            var order = new MarketOrder(Symbol.Create("DLF", SecurityType.Equity, Market.USA), 1, DateTime.UtcNow, 1);
+            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, market), quantity, DateTime.UtcNow, price);
             var actual = controller.PlaceOrder(order);
 
-            var actualString = actual.ToString();
+
+            var actualString = actual.ToString().Remove(10, 6);
+
+            var msgSeqNum = actualString.Substring(18, 2);
+
+            actualString = actualString.Remove(31, 25);
+
+            var expectedString = $"8=FIX.4.2\u000135=D\u000134={msgSeqNum}\u000149=CLIENT1\u000156=SIMPLE\u000111={actual.ClOrdID}\u000115=\u000121=1\u000122=4\u000138={quantity}\u000140=1\u000144={price}\u000148={ticker} 2T\u000154=1\u000155={ticker}\u000160={actual.TransactTime}\u0001167=CS\u000110={actual.CheckSum()}\u0001";
+
+            Assert.AreEqual(expectedString, actualString);
         }
 
         protected override IBrokerage CreateBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider)

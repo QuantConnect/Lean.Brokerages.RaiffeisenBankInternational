@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using QuantConnect.Logging;
 using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Connection.Interfaces;
 using QuantConnect.RBI.Fix.Core.Interfaces;
 using QuantConnect.Securities;
+using QuantConnect.Tests;
 using QuickFix.Fields;
 using QuickFix.FIX42;
 
@@ -38,6 +41,9 @@ public class FixSymbolController : IFixSymbolController
         var securityType = new QuickFix.Fields.SecurityType(_symbolMapper.GetBrokerageSecurityType(order.Symbol.SecurityType));
 
         var side = new Side(order.Direction == OrderDirection.Buy ? Side.BUY : Side.SELL);
+        
+        var securityId =
+            SecurityIdentifier.GenerateEquity(ticker, Market.USA, mappingResolveDate: DateTime.UtcNow);
 
         var newOrder = new NewOrderSingle()
         {
@@ -48,12 +54,12 @@ public class FixSymbolController : IFixSymbolController
             TransactTime = new TransactTime(DateTime.UtcNow),
             OrderQty = new OrderQty(order.Quantity),
             SecurityType = securityType,
-            ExDestination = new ExDestination("DE"),
             IDSource = new IDSource("4"),
-            //add isincode
+            // change to ISINCode
+            SecurityID = new SecurityID(securityId.ToString()),
             //add timeinforce
+            //add ex destination
             Currency = new Currency(order.PriceCurrency)
-           
         };
 
 
@@ -112,32 +118,32 @@ public class FixSymbolController : IFixSymbolController
             TransactTime = new TransactTime(order.Time),
             OrderQty = new OrderQty(order.Quantity)
         };
-        
+
         var side = new Side(order.Direction == OrderDirection.Buy ? Side.BUY : Side.SELL);
         request.Side = side;
-        
+
         switch (order.Type)
         {
             case OrderType.Limit:
                 request.OrdType = new OrdType(OrdType.LIMIT);
                 request.Price = new Price(((LimitOrder) order).LimitPrice);
                 break;
-            
+
             case OrderType.Market:
                 request.OrdType = new OrdType(OrdType.MARKET);
                 break;
-            
+
             case OrderType.StopLimit:
                 request.OrdType = new OrdType(OrdType.STOP_LIMIT);
                 request.Price = new Price(((StopLimitOrder) order).LimitPrice);
                 request.StopPx = new StopPx(((StopLimitOrder) order).StopPrice);
                 break;
-            
+
             case OrderType.StopMarket:
                 request.OrdType = new OrdType(OrdType.STOP);
                 request.StopPx = new StopPx(((StopMarketOrder) order).StopPrice);
                 break;
-            
+
             // add market on limit
             default:
                 Logging.Log.Trace($"RBI doesn't support this Order Type: {nameof(order.Type)}");
@@ -148,4 +154,16 @@ public class FixSymbolController : IFixSymbolController
 
         return request;
     }
+    
+    // private IEnumerable<Securities.SecurityDefinition> GetSecurityDefinitions()
+    // {
+    //     var _securitiesDefinitionKey = Path.Combine(Globals.DataFolder, "symbol-properties", "security-database.csv");
+    //     
+    //     if (!Securities.SecurityDefinition.TryRead(_dataProvider, _securitiesDefinitionKey, out var securityDefinitions))
+    //     {
+    //         securityDefinitions = new List<Securities.SecurityDefinition>();
+    //         Log.Error($"SecurityDefinitionSymbolResolver(): No security definitions data loaded from file: {_securitiesDefinitionKey}");
+    //     }
+    //     return securityDefinitions;
+    // }
 }
