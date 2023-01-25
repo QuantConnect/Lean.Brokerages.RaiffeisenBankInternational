@@ -63,7 +63,7 @@ namespace QuantConnect.RBI
 
             _symbolMapper = new RBISymbolMapper();
 
-            _fixBrokerageController = new FixBrokerageController();
+            _fixBrokerageController = new FixBrokerageController(_symbolMapper);
             // add execution report
             var fixProtocolDirector = new FixMessageHandler(config, _fixBrokerageController);
             _fixInstance = new FixInstance(fixProtocolDirector, config);
@@ -126,7 +126,7 @@ namespace QuantConnect.RBI
         /// <returns>The open orders returned from IB</returns>
         public override List<Order> GetOpenOrders()
         {
-            return new List<Order>();
+            return _fixBrokerageController.GetOpenOrders();
         }
         
         /// <summary>
