@@ -47,7 +47,7 @@ public class FixBrokerageController : IFixBrokerageController
     }
 
     //change to order
-    public NewOrderSingle PlaceOrder(Order order)
+    public bool PlaceOrder(Order order)
     {
         if (_symbolController == null)
         {
@@ -67,7 +67,7 @@ public class FixBrokerageController : IFixBrokerageController
         return _symbolController.CancelOrder(order);
     }
 
-    public OrderCancelReplaceRequest UpdateOrder(Order order)
+    public bool UpdateOrder(Order order)
     {
         if (_symbolController == null)
         {

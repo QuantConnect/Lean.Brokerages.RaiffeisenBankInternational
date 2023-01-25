@@ -24,51 +24,57 @@ using QuantConnect.Securities;
 using QuantConnect.Brokerages;
 using System.Collections.Generic;
 using QuantConnect.RBI.Fix;
+using QuantConnect.RBI.Fix.Core;
 using QuantConnect.RBI.Fix.Core.Implementations;
 using QuantConnect.RBI.Fix.Core.Interfaces;
 
 namespace QuantConnect.RBI
 {
     [BrokerageFactory(typeof(RBIBrokerageFactory))]
-    public class RBIBrokerage : Brokerage
+    public class RBIBrokerage : Brokerage, IDataQueueHandler
     {
         private readonly IFixBrokerageController _fixBrokerageController;
+        private readonly FixInstance _fixInstance;
+        private readonly RBISymbolMapper _symbolMapper;
 
         private readonly IDataAggregator _aggregator;
         private readonly EventBasedDataQueueHandlerSubscriptionManager _subscriptionManager;
+        private readonly IOrderProvider _orderProvider;
+        private readonly ISecurityProvider _securityProvider;
+        private readonly IAlgorithm _algorithm;
+        private readonly LiveNodePacket _job;
+
+        public RBIBrokerage(
+            FixInstance fixInstance,
+            FixConfiguration config,
+            RBISymbolMapper symbolMapper,
+            IDataAggregator aggregator,
+            EventBasedDataQueueHandlerSubscriptionManager subscriptionManager,
+            IOrderProvider orderProvider,
+            ISecurityProvider securityProvider,
+            IAlgorithm algorithm,
+            LiveNodePacket job) : base("RBI")
+        {
+            _algorithm = algorithm;
+            _job = job;
+            _aggregator = aggregator;
+            _orderProvider = orderProvider;
+            _securityProvider = securityProvider;
+
+            _symbolMapper = new RBISymbolMapper();
+
+            _fixBrokerageController = new FixBrokerageController();
+            // add execution report
+            var fixProtocolDirector = new FixMessageHandler(config, _fixBrokerageController);
+            _fixInstance = new FixInstance(fixProtocolDirector, config);
+        }
 
         /// <summary>
         /// Returns true if we're currently connected to the broker
         /// </summary>
-        public override bool IsConnected { get; }
-
-        /// <summary>
-        /// Parameterless constructor for brokerage
-        /// </summary>
-        /// <remarks>This parameterless constructor is required for brokerages implementing <see cref="IDataQueueHandler"/></remarks>
-        public RBIBrokerage()
-            : this(Composer.Instance.GetPart<IDataAggregator>())
-        {
-        }
-
-        /// <summary>
-         /// Creates a new instance
-         /// </summary>
-        /// <param name="aggregator">consolidate ticks</param>
-        public RBIBrokerage(IDataAggregator aggregator) : base("RBIBrokerage")
-        {
-            _aggregator = aggregator;
+        public override bool IsConnected => _fixInstance.IsConnected();
         
-            // Useful for some brokerages:
         
-            // Brokerage helper class to lock websocket message stream while executing an action, for example placing an order
-            // avoid race condition with placing an order and getting filled events before finished placing
-            // _messageHandler = new BrokerageConcurrentMessageHandler<>();
-        
-            // Rate gate limiter useful for API/WS calls
-            // _connectionRateLimiter = new RateGate();
-        }
-
         #region IDataQueueHandler
         
         /// <summary>
@@ -120,7 +126,7 @@ namespace QuantConnect.RBI
         /// <returns>The open orders returned from IB</returns>
         public override List<Order> GetOpenOrders()
         {
-            throw new NotImplementedException();
+            return new List<Order>();
         }
         
         /// <summary>
@@ -129,7 +135,7 @@ namespace QuantConnect.RBI
         /// <returns>The current holdings from the account</returns>
         public override List<Holding> GetAccountHoldings()
         {
-            throw new NotImplementedException();
+            return GetAccountHoldings(_job.BrokerageData, (_securityProvider as SecurityPortfolioManager)?.Securities.Values);
         }
         
         /// <summary>
@@ -138,7 +144,7 @@ namespace QuantConnect.RBI
         /// <returns>The current cash balance for each currency available for trading</returns>
         public override List<CashAmount> GetCashBalance()
         {
-            throw new NotImplementedException();
+            return GetCashBalance(_job.BrokerageData, (_securityProvider as SecurityPortfolioManager)?.CashBook);
         }
         
         /// <summary>
@@ -148,7 +154,7 @@ namespace QuantConnect.RBI
         /// <returns>True if the request for a new order has been placed, false otherwise</returns>
         public override bool PlaceOrder(Order order)
         {
-            throw new NotImplementedException();
+            return _fixBrokerageController.PlaceOrder(order);
         }
         
         /// <summary>
@@ -158,7 +164,7 @@ namespace QuantConnect.RBI
         /// <returns>True if the request was made for the order to be updated, false otherwise</returns>
         public override bool UpdateOrder(Order order)
         {
-            throw new NotImplementedException();
+            return _fixBrokerageController.UpdateOrder(order);
         }
         
         /// <summary>
@@ -168,7 +174,7 @@ namespace QuantConnect.RBI
         /// <returns>True if the request was made for the order to be canceled, false otherwise</returns>
         public override bool CancelOrder(Order order)
         {
-            throw new NotImplementedException();
+            return _fixBrokerageController.CancelOrder(order);
         }
         
         /// <summary>
@@ -176,7 +182,7 @@ namespace QuantConnect.RBI
         /// </summary>
         public override void Connect()
         {
-            throw new NotImplementedException();
+            _fixInstance.Initialize();
         }
         
         /// <summary>
@@ -184,7 +190,7 @@ namespace QuantConnect.RBI
         /// </summary>
         public override void Disconnect()
         {
-            throw new NotImplementedException();
+            _fixInstance.Terminate();
         }
         
         #endregion
@@ -218,12 +224,12 @@ namespace QuantConnect.RBI
         
         private bool CanSubscribe(Symbol symbol)
         {
-            if (symbol.Value.IndexOfInvariant("universe", true) != -1 || symbol.IsCanonical())
+            if (symbol.Value.IndexOfInvariant("universe", true) != -1)
             {
                 return false;
             }
-        
-            throw new NotImplementedException();
+
+            return true;
         }
         
         /// <summary>

@@ -29,7 +29,7 @@ using QuickFix.FIX42;
 namespace QuantConnect.RBI.Tests
 {
     [TestFixture]
-    public partial class RBIBrokerageTests : BrokerageTests
+    public partial class RBIBrokerageTests
     {
         private readonly FixConfiguration _fixConfiguration = new()
         {
@@ -56,10 +56,10 @@ namespace QuantConnect.RBI.Tests
         }
         
         [Test]
-        [TestCase("AAPL",5, 500, Market.USA)]
-        [TestCase("DLF", 10, 10000, Market.Binance)]
-        [TestCase("GOOCV", 2, 230, Market.FTX)]
-        public void PlaceOrder(string ticker, decimal quantity, decimal price, string market)
+        [TestCase("AAPL",5, 500)]
+        [TestCase("DLF", 10, 10000)]
+        [TestCase("GOOCV", 2, 230)]
+        public void PlaceOrder(string ticker, decimal quantity, decimal price)
         {
             var controller = new FixBrokerageController();
             var messageHandler = new FixMessageHandler(_fixConfiguration, controller);
@@ -73,7 +73,7 @@ namespace QuantConnect.RBI.Tests
 
             fixInstance.OnLogon(sessionId);
 
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, market), quantity, DateTime.UtcNow, price);
+            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity, DateTime.UtcNow, price);
             var actual = controller.PlaceOrder(order);
 
 
@@ -88,21 +88,42 @@ namespace QuantConnect.RBI.Tests
             Assert.AreEqual(expectedString, actualString);
         }
 
-        protected override IBrokerage CreateBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider)
+        [Test]
+        public void UpdateOrder()
         {
-            return new RBIBrokerage();
+            var controller = new FixBrokerageController();
+            var messageHandler = new FixMessageHandler(_fixConfiguration, controller);
+
+            using var fixInstance = new FixInstance(messageHandler, _fixConfiguration);
+
+            fixInstance.Initialize();
+
+
+            var sessionId = new SessionID(_fixConfiguration.FixVersionString, _fixConfiguration.SenderCompId, _fixConfiguration.TargetCompId);
+
+            fixInstance.OnLogon(sessionId);
+            
+            var order = new MarketOrder(Symbol.Create("DLF", SecurityType.Equity, Market.USA), 1, DateTime.UtcNow, 500);
+            controller.PlaceOrder(order);
+
+            controller.UpdateOrder(order);
         }
-        
-        protected override Symbol Symbol { get; }
-        protected override SecurityType SecurityType { get; }
-        protected override bool IsAsync()
-        {
-            return true;
-        }
-        
-        protected override decimal GetAskPrice(Symbol symbol)
-        {
-            return 0;
-        }
+
+        // protected override IBrokerage CreateBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider)
+        // {
+        //     return new RBIBrokerage();
+        // }
+        //
+        // protected override Symbol Symbol { get; }
+        // protected override SecurityType SecurityType { get; }
+        // protected override bool IsAsync()
+        // {
+        //     return true;
+        // }
+        //
+        // protected override decimal GetAskPrice(Symbol symbol)
+        // {
+        //     return 0;
+        // }
     }
 }

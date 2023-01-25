@@ -4,6 +4,7 @@ using System.Threading;
 using QuantConnect.RBI.Fix.Core.Interfaces;
 using QuantConnect.Util;
 using QuickFix;
+using QuickFix.Fields;
 using QuickFix.Transport;
 using Message = QuickFix.Message;
 
@@ -44,14 +45,22 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
         Thread.Sleep(3000);
     }
 
+    public void Terminate()
+    {
+        if (!_initiator.IsStopped)
+        {
+            _initiator.Stop();
+        }
+    }
+
     public void ToAdmin(Message message, SessionID sessionID)
     {
-        Console.WriteLine("toadmin");
+        _messageHandler.EnrichMessage(message);
     }
 
     public void FromAdmin(Message message, SessionID sessionID)
     {
-        Console.WriteLine("fromadmin");
+        _messageHandler.HandleAdminMessage(message, sessionID);
     }
 
     public void ToApp(Message message, SessionID sessionID)
@@ -61,12 +70,12 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 
     public void FromApp(Message message, SessionID sessionID)
     {
-        Console.WriteLine("fromapp");
+        _messageHandler.Handle(message, sessionID);
     }
 
     public void OnCreate(SessionID sessionID)
     {
-        Console.WriteLine("oncreate");
+        
     }
 
     public void OnLogout(SessionID sessionID)

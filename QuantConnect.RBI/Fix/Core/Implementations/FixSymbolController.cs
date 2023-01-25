@@ -34,7 +34,7 @@ public class FixSymbolController : IFixSymbolController
         throw new System.NotImplementedException();
     }
     
-    public NewOrderSingle PlaceOrder(Order order)
+    public bool PlaceOrder(Order order)
     {
         var ticker = _symbolMapper.GetBrokerageSymbol(order.Symbol);
 
@@ -94,8 +94,8 @@ public class FixSymbolController : IFixSymbolController
 
         Log.Trace($"FixSymbolController.PlaceOrder(): sending order {order.Id}...");
         order.BrokerId.Add(newOrder.ClOrdID.getValue());
-        _session.Send(newOrder);
-        return newOrder;
+        
+        return _session.Send(newOrder);
     }
 
     public bool CancelOrder(Order order)
@@ -107,7 +107,7 @@ public class FixSymbolController : IFixSymbolController
         });
     }
 
-    public OrderCancelReplaceRequest UpdateOrder(Order order)
+    public bool UpdateOrder(Order order)
     {
         var request = new OrderCancelReplaceRequest
         {
@@ -150,9 +150,7 @@ public class FixSymbolController : IFixSymbolController
                 break;
         }
 
-        _session.Send(request);
-
-        return request;
+        return _session.Send(request);
     }
     
     // private IEnumerable<Securities.SecurityDefinition> GetSecurityDefinitions()

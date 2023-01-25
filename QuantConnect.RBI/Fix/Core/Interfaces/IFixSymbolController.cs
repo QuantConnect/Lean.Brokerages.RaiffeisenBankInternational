@@ -9,9 +9,9 @@ public interface IFixSymbolController
 
     bool UnsubscribeFromSymbol(Symbol symbol);
 
-    NewOrderSingle PlaceOrder(Order order);
+    bool PlaceOrder(Order order);
 
     bool CancelOrder(Order order);
 
-    OrderCancelReplaceRequest UpdateOrder(Order order);
+    bool UpdateOrder(Order order);
 }
