@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using QLNet;
+using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Connection.Implementations;
 using QuantConnect.RBI.Fix.Connection.Interfaces;
 using QuantConnect.RBI.Fix.Core.Interfaces;
+using QuantConnect.TemplateBrokerage.Fix.Utils;
+using QuantConnect.Util;
 using QuickFix;
 using QuickFix.Fields;
 using QuickFix.FIX42;
@@ -96,9 +99,29 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
         }
     }
 
-    public void OnMessage(Message message, SessionID sessionId)
+    public void OnMessage(ExecutionReport report, SessionID sessionId)
     {
-        Log.Trace($"Sending message {message.GetType().Name}");
+        Log.Trace($"OnMessage(ExecutionReport): {report}");
+
+        var orderId = report.OrderID.getValue();
+        var clOrdId = report.ClOrdID.getValue();
+        var execType = report.ExecType.getValue();
+
+        var orderStatus = Utility.ConvertOrderStatus(report);
+
+        if (!clOrdId.IsNullOrEmpty())
+        {
+            if (orderStatus == OrderStatus.Invalid)
+            {
+                Log.Error($"Invalid order status: {report}");
+            }
+            else
+            {
+                Log.Trace($"ExecutionReport: Id = {orderId}, ClOrdId = {clOrdId}, ExecType = {execType}, Status = {orderStatus}");
+            }
+
+            _brokerageController.Receive(report);
+        }
     }
     
     private int GetExpectedMsgSeqNum(Message msg)

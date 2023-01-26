@@ -14,10 +14,16 @@
 */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using NUnit.Framework;
+using QuantConnect.Algorithm;
 using QuantConnect.Tests;
 using QuantConnect.Interfaces;
+using QuantConnect.Lean.Engine.DataFeeds;
 using QuantConnect.Orders;
+using QuantConnect.Packets;
 using QuantConnect.RBI.Fix;
 using QuantConnect.RBI.Fix.Core;
 using QuantConnect.RBI.Fix.Core.Implementations;
@@ -39,6 +45,10 @@ namespace QuantConnect.RBI.Tests
             Host = "127.0.0.1",
             Port = 5080
         };
+        private readonly QCAlgorithm _algorithm = new QCAlgorithm();
+        private readonly LiveNodePacket _job = new LiveNodePacket();
+        private readonly OrderProvider _orderProvider = new OrderProvider(new List<Order>());
+        private readonly AggregationManager _aggregationManager = new AggregationManager();
 
 
         /// <summary>
@@ -84,10 +94,10 @@ namespace QuantConnect.RBI.Tests
             var msgSeqNum = actualString.Substring(18, 2);
 
             actualString = actualString.Remove(31, 25);
-
-            // var expectedString = $"8=FIX.4.2\u000135=D\u000134={msgSeqNum}\u000149=CLIENT1\u000156=SIMPLE\u000111={actual.ClOrdID}\u000115=\u000121=1\u000122=4\u000138={quantity}\u000140=1\u000144={price}\u000148={ticker} 2T\u000154=1\u000155={ticker}\u000160={actual.TransactTime}\u0001167=CS\u000110={actual.CheckSum()}\u0001";
-            //
-            // Assert.AreEqual(expectedString, actualString);
+            
+            var expectedString = $"8=FIX.4.2\u000135=D\u000134={msgSeqNum}\u000149=CLIENT1\u000156=SIMPLE\u000111={actual.ClOrdID}\u000115=\u000121=1\u000122=4\u000138={quantity}\u000140=1\u000144={price}\u000148={ticker} 2T\u000154=1\u000155={ticker}\u000160={actual.TransactTime}\u0001167=CS\u000110={actual.CheckSum()}\u0001";
+            
+            Assert.AreEqual(expectedString, actualString);
         }
 
         [Test]
@@ -110,6 +120,35 @@ namespace QuantConnect.RBI.Tests
             controller.PlaceOrder(order);
 
             controller.UpdateOrder(order);
+        }
+
+        [Test]
+        [TestCase("GOOCV", 2, 230)]
+        public void PlaceOrderWithResponse(string ticker, decimal quantity, decimal price)
+        {
+            using (var brokerage =
+                   new RBIBrokerage(_fixConfiguration, _aggregationManager, _orderProvider, _algorithm, _job))
+            {
+                var submittedEvent = new ManualResetEvent(false);
+
+                brokerage.OrdersStatusChanged += (sender, e) =>
+                {
+                    if (e.Any(o => o.Status == OrderStatus.Submitted))
+                    {
+                        submittedEvent.Set();
+                    }
+                };
+
+                brokerage.Connect();
+                
+                var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity, DateTime.UtcNow, price);
+
+                _orderProvider.Add(order);
+
+                brokerage.PlaceOrder(order);
+                
+                Assert.IsTrue(submittedEvent.WaitOne(TimeSpan.FromSeconds(20)));
+            }
         }
 
         // protected override IBrokerage CreateBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider)

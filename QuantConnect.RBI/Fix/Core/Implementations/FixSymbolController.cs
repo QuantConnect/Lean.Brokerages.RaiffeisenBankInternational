@@ -146,7 +146,7 @@ public class FixSymbolController : IFixSymbolController
 
             // add market on limit
             default:
-                Logging.Log.Trace($"RBI doesn't support this Order Type: {nameof(order.Type)}");
+                Log.Trace($"RBI doesn't support this Order Type: {nameof(order.Type)}");
                 break;
         }
 

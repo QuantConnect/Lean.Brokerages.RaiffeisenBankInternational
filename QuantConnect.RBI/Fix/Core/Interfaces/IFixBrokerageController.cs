@@ -24,4 +24,6 @@ public interface IFixBrokerageController
     bool UpdateOrder(Order order);
 
     public List<Order> GetOpenOrders();
+
+    void Receive(ExecutionReport report);
 }

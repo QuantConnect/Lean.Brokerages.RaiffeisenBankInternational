@@ -23,10 +23,15 @@ using QuantConnect.Interfaces;
 using QuantConnect.Securities;
 using QuantConnect.Brokerages;
 using System.Collections.Generic;
+using QuantConnect.Logging;
+using QuantConnect.Orders.Fees;
 using QuantConnect.RBI.Fix;
 using QuantConnect.RBI.Fix.Core;
 using QuantConnect.RBI.Fix.Core.Implementations;
 using QuantConnect.RBI.Fix.Core.Interfaces;
+using QuantConnect.TemplateBrokerage.Fix.Utils;
+using QuantConnect.Tests.Brokerages;
+using QuickFix.FIX42;
 
 namespace QuantConnect.RBI
 {
@@ -45,13 +50,9 @@ namespace QuantConnect.RBI
         private readonly LiveNodePacket _job;
 
         public RBIBrokerage(
-            FixInstance fixInstance,
             FixConfiguration config,
-            RBISymbolMapper symbolMapper,
             IDataAggregator aggregator,
-            EventBasedDataQueueHandlerSubscriptionManager subscriptionManager,
             IOrderProvider orderProvider,
-            ISecurityProvider securityProvider,
             IAlgorithm algorithm,
             LiveNodePacket job) : base("RBI")
         {
@@ -59,12 +60,14 @@ namespace QuantConnect.RBI
             _job = job;
             _aggregator = aggregator;
             _orderProvider = orderProvider;
-            _securityProvider = securityProvider;
+            _securityProvider = new SecurityProvider();
 
             _symbolMapper = new RBISymbolMapper();
 
             _fixBrokerageController = new FixBrokerageController(_symbolMapper);
-            // add execution report
+            
+            _fixBrokerageController.ExecutionReport += OnExecutionReport;
+            
             var fixProtocolDirector = new FixMessageHandler(config, _fixBrokerageController);
             _fixInstance = new FixInstance(fixProtocolDirector, config);
         }
@@ -248,6 +251,41 @@ namespace QuantConnect.RBI
         private bool Unsubscribe(IEnumerable<Symbol> symbols)
         {
             throw new NotImplementedException();
+        }
+
+        private void OnExecutionReport(object sender, ExecutionReport report)
+        {
+            Log.Trace($"OnExecutionReport(): {sender} sent {report}");
+
+            var orderStatus = Utility.ConvertOrderStatus(report);
+
+            var ordId = orderStatus == OrderStatus.Canceled || orderStatus == OrderStatus.UpdateSubmitted
+                ? report.OrigClOrdID.getValue()
+                : report.ClOrdID.getValue();
+
+            var transactTime = report.TransactTime.getValue();
+
+            var order = _orderProvider.GetOrderByBrokerageId(ordId);
+
+            if (order == null)
+            {
+                Log.Trace($"No order with Id {ordId} was found");
+                return;
+            }
+
+            var message = "RBI OnOrderEvent";
+
+            if (report.IsSetText())
+            {
+                message += $" - {report.Text.getValue()}";
+            }
+
+            var orderEvent = new OrderEvent(order, transactTime, OrderFee.Zero, message)
+            {
+                Status = orderStatus
+            };
+            
+            OnOrderEvent(orderEvent);
         }
     }
 }
