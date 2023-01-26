@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using QuantConnect.Packets;
 using QuantConnect.RBI.Fix.Core.Interfaces;
+using QuantConnect.Securities;
 using QuantConnect.Util;
 using QuickFix;
 using QuickFix.Fields;
@@ -15,6 +17,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     private readonly IFixMessageHandler _messageHandler;
     private readonly FixConfiguration _config;
     private readonly SocketInitiator _initiator;
+    private readonly SecurityExchangeHours _securityExchangeHours;
 
     private bool _isDisposed = false;
 
@@ -29,6 +32,8 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
         var messageFactory = new DefaultMessageFactory(); 
 
         _initiator = new SocketInitiator(this, storeFactory, settings, logFactory, messageFactory);
+        _securityExchangeHours =
+            MarketHoursDatabase.FromDataFolder().GetExchangeHours(Market.USA, null, SecurityType.Equity);
     }
     
     public bool IsConnected()
@@ -41,8 +46,11 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 
     public void Initialize()
     {
-        _initiator.Start();
-        Thread.Sleep(3000);
+        if (!_messageHandler.IsSessionReady() && IsExchangeOpen())
+        {
+            _initiator.Start();
+            Thread.Sleep(3000);
+        }
     }
 
     public void Terminate()
@@ -65,7 +73,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 
     public void ToApp(Message message, SessionID sessionID)
     {
-        Console.WriteLine("toapp");
+        // not implemented
     }
 
     public void FromApp(Message message, SessionID sessionID)
@@ -97,5 +105,10 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 
         _isDisposed = true;
         _initiator.DisposeSafely();
+    }
+
+    private bool IsExchangeOpen()
+    {
+        return _securityExchangeHours.IsOpen(DateTime.UtcNow.ConvertFromUtc(_securityExchangeHours.TimeZone), true);
     }
 }
