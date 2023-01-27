@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Core.Interfaces;
-using QuantConnect.TemplateBrokerage.Fix.Utils;
+using QuantConnect.RBI.Fix.Utils;
 using QuickFix.Fields;
 using QuickFix.FIX42;
 

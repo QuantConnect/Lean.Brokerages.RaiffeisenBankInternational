@@ -5,7 +5,7 @@ using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Connection.Implementations;
 using QuantConnect.RBI.Fix.Connection.Interfaces;
 using QuantConnect.RBI.Fix.Core.Interfaces;
-using QuantConnect.TemplateBrokerage.Fix.Utils;
+using QuantConnect.RBI.Fix.Utils;
 using QuantConnect.Util;
 using QuickFix;
 using QuickFix.Fields;
@@ -41,7 +41,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
     {
         if (_brokerageController == null)
         {
-            Logging.Log.Trace($"Handle(): No controller was registered");
+            Log.Trace($"Handle(): No controller was registered");
         }
         
         Crack(message, sessionId);
@@ -99,7 +99,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
         }
     }
 
-    public void OnMessage(ExecutionReport report, SessionID sessionId)
+    private void OnMessage(ExecutionReport report, SessionID sessionId)
     {
         Log.Trace($"OnMessage(ExecutionReport): {report}");
 
@@ -127,7 +127,9 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
     private int GetExpectedMsgSeqNum(Message msg)
     {
         if (!msg.IsSetField(Text.TAG))
+        {
             return 0;
+        }
 
         var textMsg = msg.GetString(Text.TAG);
         return textMsg.Contains("expected")

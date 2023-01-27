@@ -28,10 +28,8 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 
         var settings = _config.GetDefaultSessionSettings();
         var storeFactory = new FileStoreFactory(settings);
-        ScreenLogFactory logFactory = new ScreenLogFactory(settings); 
-        var messageFactory = new DefaultMessageFactory(); 
 
-        _initiator = new SocketInitiator(this, storeFactory, settings, logFactory, messageFactory);
+        _initiator = new SocketInitiator(this, storeFactory, settings);
         _securityExchangeHours =
             MarketHoursDatabase.FromDataFolder().GetExchangeHours(Market.USA, null, SecurityType.Equity);
     }

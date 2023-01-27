@@ -7,7 +7,6 @@ using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Connection.Interfaces;
 using QuantConnect.RBI.Fix.Core.Interfaces;
 using QuantConnect.Securities;
-using QuantConnect.Tests;
 using QuickFix.Fields;
 using QuickFix.FIX42;
 
@@ -22,6 +21,8 @@ public class FixSymbolController : IFixSymbolController
     {
         _session = session;
         _symbolMapper = new RBISymbolMapper();
+        
+        
     }
 
     public bool SubscribeToSymbol(Symbol symbol)
@@ -86,9 +87,14 @@ public class FixSymbolController : IFixSymbolController
                 newOrder.StopPx = new StopPx(((StopMarketOrder) order).StopPrice);
                 break;
             
-            // add market on limit
+            case OrderType.LimitIfTouched:
+                newOrder.OrdType = new OrdType(OrdType.MARKET_IF_TOUCHED);
+                newOrder.Price = new Price(((LimitIfTouchedOrder) order).LimitPrice);
+                newOrder.StopPx = new StopPx(((LimitIfTouchedOrder) order).TriggerPrice);
+                break;
+            
             default:
-                Logging.Log.Trace($"RBI doesn't support this Order Type: {nameof(order.Type)}");
+                Log.Trace($"RBI doesn't support this Order Type: {nameof(order.Type)}");
                 break;
         }
 
@@ -144,7 +150,12 @@ public class FixSymbolController : IFixSymbolController
                 request.StopPx = new StopPx(((StopMarketOrder) order).StopPrice);
                 break;
 
-            // add market on limit
+            case OrderType.LimitIfTouched:
+                request.OrdType = new OrdType(OrdType.MARKET_IF_TOUCHED);
+                request.Price = new Price(((LimitIfTouchedOrder) order).LimitPrice);
+                request.StopPx = new StopPx(((LimitIfTouchedOrder) order).TriggerPrice);
+                break;
+            
             default:
                 Log.Trace($"RBI doesn't support this Order Type: {nameof(order.Type)}");
                 break;

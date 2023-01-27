@@ -7,7 +7,7 @@ using QuantConnect.Orders;
 using QuickFix.Fields;
 using QuickFix.FIX42;
 
-namespace QuantConnect.TemplateBrokerage.Fix.Utils
+namespace QuantConnect.RBI.Fix.Utils
 {
     public static class Utility
     {

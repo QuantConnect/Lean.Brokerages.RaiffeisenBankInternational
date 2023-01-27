@@ -21,22 +21,21 @@ using QuantConnect.Orders;
 using QuantConnect.Packets;
 using QuantConnect.Interfaces;
 using QuantConnect.Securities;
-using QuantConnect.Brokerages;
 using System.Collections.Generic;
+using QuantConnect.Brokerages;
 using QuantConnect.Logging;
 using QuantConnect.Orders.Fees;
 using QuantConnect.RBI.Fix;
 using QuantConnect.RBI.Fix.Core;
 using QuantConnect.RBI.Fix.Core.Implementations;
 using QuantConnect.RBI.Fix.Core.Interfaces;
-using QuantConnect.TemplateBrokerage.Fix.Utils;
-using QuantConnect.Tests.Brokerages;
+using QuantConnect.RBI.Fix.Utils;
 using QuickFix.FIX42;
 
 namespace QuantConnect.RBI
 {
     [BrokerageFactory(typeof(RBIBrokerageFactory))]
-    public class RBIBrokerage : Brokerage, IDataQueueHandler
+    public class RBIBrokerage : Brokerage
     {
         private readonly IFixBrokerageController _fixBrokerageController;
         private readonly FixInstance _fixInstance;
@@ -49,10 +48,13 @@ namespace QuantConnect.RBI
         private readonly IAlgorithm _algorithm;
         private readonly LiveNodePacket _job;
 
+        public event EventHandler<OrderEvent> OrderStatusChanged;
+
         public RBIBrokerage(
             FixConfiguration config,
             IDataAggregator aggregator,
             IOrderProvider orderProvider,
+            ISecurityProvider securityProvider,
             IAlgorithm algorithm,
             LiveNodePacket job) : base("RBI")
         {
@@ -60,12 +62,12 @@ namespace QuantConnect.RBI
             _job = job;
             _aggregator = aggregator;
             _orderProvider = orderProvider;
-            _securityProvider = new SecurityProvider();
+            _securityProvider = securityProvider;
 
             _symbolMapper = new RBISymbolMapper();
 
             _fixBrokerageController = new FixBrokerageController(_symbolMapper);
-            
+
             _fixBrokerageController.ExecutionReport += OnExecutionReport;
             
             var fixProtocolDirector = new FixMessageHandler(config, _fixBrokerageController);
@@ -197,34 +199,7 @@ namespace QuantConnect.RBI
         }
         
         #endregion
-        
-        #region IDataQueueUniverseProvider
-        
-        /// <summary>
-        /// Method returns a collection of Symbols that are available at the data source.
-        /// </summary>
-        /// <param name="symbol">Symbol to lookup</param>
-        /// <param name="includeExpired">Include expired contracts</param>
-        /// <param name="securityCurrency">Expected security currency(if any)</param>
-        /// <returns>Enumerable of Symbols, that are associated with the provided Symbol</returns>
-        public IEnumerable<Symbol> LookupSymbols(Symbol symbol, bool includeExpired, string securityCurrency = null)
-        {
-            throw new NotImplementedException();
-        }
-        
-        /// <summary>
-        /// Returns whether selection can take place or not.
-        /// </summary>
-        /// <remarks>This is useful to avoid a selection taking place during invalid times, for example IB reset times or when not connected,
-        /// because if allowed selection would fail since IB isn't running and would kill the algorithm</remarks>
-        /// <returns>True if selection can take place</returns>
-        public bool CanPerformSelection()
-        {
-            throw new NotImplementedException();
-        }
-        
-        #endregion
-        
+
         private bool CanSubscribe(Symbol symbol)
         {
             if (symbol.Value.IndexOfInvariant("universe", true) != -1)
@@ -234,7 +209,7 @@ namespace QuantConnect.RBI
 
             return true;
         }
-        
+
         /// <summary>
         /// Adds the specified symbols to the subscription
         /// </summary>
