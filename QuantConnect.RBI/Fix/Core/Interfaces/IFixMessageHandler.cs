@@ -1,4 +1,6 @@
 ﻿using QuickFix;
+using QuickFix.FIX42;
+using Message = QuickFix.Message;
 
 namespace QuantConnect.RBI.Fix.Core.Interfaces;
 
@@ -17,4 +19,8 @@ public interface IFixMessageHandler
     void OnLogon(SessionID sessionId);
 
     void OnLogout(SessionID sessionId);
+
+    void OnMessage(ExecutionReport report, SessionID sessionId);
+
+    void OnMessage(OrderCancelReject reject, SessionID sessionId);
 }

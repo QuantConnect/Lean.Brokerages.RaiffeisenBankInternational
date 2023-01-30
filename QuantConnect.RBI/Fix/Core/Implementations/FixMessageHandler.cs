@@ -99,7 +99,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
         }
     }
 
-    private void OnMessage(ExecutionReport report, SessionID sessionId)
+    public void OnMessage(ExecutionReport report, SessionID sessionId)
     {
         Log.Trace($"OnMessage(ExecutionReport): {report}");
 
@@ -123,6 +123,13 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
             _brokerageController.Receive(report);
         }
     }
+
+    public void OnMessage(OrderCancelReject reject, SessionID sessionId)
+    {
+        var (reason, responseTo, text) = this.MapCancelReject(reject);
+
+        Log.Trace($"OnMessage() : Order cancellation or modifying failed: {reason}, {text}, in response to {responseTo}");
+    }
     
     private int GetExpectedMsgSeqNum(Message msg)
     {
@@ -135,5 +142,28 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
         return textMsg.Contains("expected")
             ? Int32.Parse(System.Text.RegularExpressions.Regex.Match(textMsg, @"(?<=expected\s)[0-9]+").Value)
             : 0;
+    }
+
+    private (string reason, string responseTo, string text) MapCancelReject(OrderCancelReject rejection)
+    {
+        var reason = rejection.CxlRejReason.getValue() switch
+        {
+            CxlRejReason.TOO_LATE_TO_CANCEL => "Too late to cancel",
+            CxlRejReason.UNKNOWN_ORDER => "Unknown order",
+            CxlRejReason.BROKER_OPTION => "Broker option",
+            CxlRejReason.ORDER_ALREADY_IN_PENDING_CANCEL_OR_PENDING_REPLACE_STATUS => "Order already in Pending Cancel or Pending Replace status",
+            _ => string.Empty
+        };
+
+        var responseTo = rejection.CxlRejResponseTo.getValue() switch
+        {
+            CxlRejResponseTo.ORDER_CANCEL_REQUEST => "Order cancel request",
+            CxlRejResponseTo.ORDER_CANCEL_REPLACE_REQUEST => "Order cancel replace request",
+            _ => string.Empty
+        };
+
+        var text = rejection.Text.getValue();
+
+        return (reason, responseTo, text);
     }
 }

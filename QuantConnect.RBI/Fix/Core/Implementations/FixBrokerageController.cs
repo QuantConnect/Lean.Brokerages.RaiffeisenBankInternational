@@ -158,9 +158,13 @@ public class FixBrokerageController : IFixBrokerageController
                 order = new StopLimitOrder(symbol, orderQty, stopPrice, limitPrice, time);
             }
                 break;
-            
-            //market to limit?
-            case OrderType.MarketOnClose:
+
+            case OrderType.LimitIfTouched:
+            {
+                var limitPrice = report.Price.getValue();
+                var stopPrice = report.StopPx.getValue();
+                order = new LimitIfTouchedOrder(symbol, orderQty, stopPrice, limitPrice, time);
+            }
                 break;
         }
         

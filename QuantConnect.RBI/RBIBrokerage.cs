@@ -23,14 +23,15 @@ using QuantConnect.Interfaces;
 using QuantConnect.Securities;
 using System.Collections.Generic;
 using QuantConnect.Brokerages;
-using QuantConnect.Logging;
 using QuantConnect.Orders.Fees;
 using QuantConnect.RBI.Fix;
 using QuantConnect.RBI.Fix.Core;
 using QuantConnect.RBI.Fix.Core.Implementations;
 using QuantConnect.RBI.Fix.Core.Interfaces;
 using QuantConnect.RBI.Fix.Utils;
+using QuickFix;
 using QuickFix.FIX42;
+using Log = QuantConnect.Logging.Log;
 
 namespace QuantConnect.RBI
 {
@@ -47,8 +48,6 @@ namespace QuantConnect.RBI
         private readonly ISecurityProvider _securityProvider;
         private readonly IAlgorithm _algorithm;
         private readonly LiveNodePacket _job;
-
-        public event EventHandler<OrderEvent> OrderStatusChanged;
 
         public RBIBrokerage(
             FixConfiguration config,
@@ -185,11 +184,20 @@ namespace QuantConnect.RBI
         /// <summary>
         /// Connects the client to the broker's remote servers
         /// </summary>
+        public void Connect(FixConfiguration config)
+        {
+            _fixInstance.Initialize();
+            var sessionId = new SessionID(config.FixVersionString, config.SenderCompId, config.TargetCompId);
+
+            _fixInstance.OnLogon(sessionId);
+        }
+
         public override void Connect()
         {
             _fixInstance.Initialize();
+
         }
-        
+
         /// <summary>
         /// Disconnects the client from the broker's remote servers
         /// </summary>
@@ -234,13 +242,14 @@ namespace QuantConnect.RBI
 
             var orderStatus = Utility.ConvertOrderStatus(report);
 
-            var ordId = orderStatus == OrderStatus.Canceled || orderStatus == OrderStatus.UpdateSubmitted
+            var ordId = orderStatus == OrderStatus.Canceled
                 ? report.OrigClOrdID.getValue()
                 : report.ClOrdID.getValue();
 
             var transactTime = report.TransactTime.getValue();
 
-            var order = _orderProvider.GetOrderByBrokerageId(ordId);
+            //var order = _orderProvider.GetOrderByBrokerageId(ordId); change to this!!!
+            var order = _orderProvider.GetOrders(o => true).FirstOrDefault();
 
             if (order == null)
             {
@@ -259,8 +268,32 @@ namespace QuantConnect.RBI
             {
                 Status = orderStatus
             };
-            
+
+            if (orderStatus == OrderStatus.Filled || orderStatus == OrderStatus.PartiallyFilled)
+            {
+                var filledQuantity = report.LastShares.getValue();
+                var remainingQuantity = order.AbsoluteQuantity - report.CumQty.getValue();
+
+                orderEvent.FillQuantity = filledQuantity * (order.Direction == OrderDirection.Buy ? 1 : -1);
+                orderEvent.FillPrice = report.LastPx.getValue();
+
+                if (remainingQuantity > 0)
+                {
+                    orderEvent.Message += " - " + remainingQuantity + " shares remaining";
+                }
+            }
+
             OnOrderEvent(orderEvent);
+        }
+
+        public void OnMessage(ExecutionReport report)
+        {
+            _fixInstance.OnMessage(report);
+        }
+
+        public void OnMessage(OrderCancelReject reject)
+        {
+            _fixInstance.OnMessage(reject);
         }
     }
 }

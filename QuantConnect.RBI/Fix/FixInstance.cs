@@ -7,6 +7,7 @@ using QuantConnect.Securities;
 using QuantConnect.Util;
 using QuickFix;
 using QuickFix.Fields;
+using QuickFix.FIX42;
 using QuickFix.Transport;
 using Message = QuickFix.Message;
 
@@ -108,5 +109,15 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     private bool IsExchangeOpen()
     {
         return _securityExchangeHours.IsOpen(DateTime.UtcNow.ConvertFromUtc(_securityExchangeHours.TimeZone), true);
+    }
+
+    public void OnMessage(ExecutionReport report)
+    {
+        _messageHandler.OnMessage(report, null);
+    }
+
+    public void OnMessage(OrderCancelReject reject)
+    {
+        _messageHandler.OnMessage(reject, null);
     }
 }

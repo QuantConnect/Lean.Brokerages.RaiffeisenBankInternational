@@ -60,6 +60,9 @@ namespace QuantConnect.RBI.Fix.Utils
                 case ExecType.FILL:
                     return OrderStatus.Filled;
 
+                case ExecType.PENDING_NEW:
+                    return OrderStatus.New;
+
                 default:
                     return OrderStatus.Invalid;
             }
