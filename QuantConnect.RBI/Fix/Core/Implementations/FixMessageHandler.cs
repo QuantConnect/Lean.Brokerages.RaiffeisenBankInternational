@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using QLNet;
 using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Connection.Implementations;
@@ -57,7 +58,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
         switch (message)
         {
             case Logout:
-                _expectedMsgSeqNumLogOn = GetExpectedMsgSeqNum(message);
+                HandleLogout(message);
                 break;
             
             case Heartbeat:
@@ -72,11 +73,16 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
         {
             case Logon logon:
                 logon.SetField(new ResetSeqNumFlag(ResetSeqNumFlag.NO));
+                if (_expectedMsgSeqNumLogOn > 0)
+                {
+                    logon.SetField(new MsgSeqNum(_expectedMsgSeqNumLogOn));
+                }
                 break;
             
             case SequenceReset reset:
                 reset.SetField(new ResetSeqNumFlag(ResetSeqNumFlag.YES));
                 break;
+            
         }
     }
 
@@ -134,18 +140,32 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
 
         Log.Trace($"OnMessage() : Order cancellation or modifying failed: {reason}, {text}, in response to {responseTo}");
     }
-    
-    private int GetExpectedMsgSeqNum(Message msg)
+
+    private void HandleLogout(Message msg)
     {
         if (!msg.IsSetField(Text.TAG))
         {
-            return 0;
+            return;
         }
 
-        var textMsg = msg.GetString(Text.TAG);
-        return textMsg.Contains("expected")
-            ? Int32.Parse(System.Text.RegularExpressions.Regex.Match(textMsg, @"(?<=expected\s)[0-9]+").Value)
-            : 0;
+        var msgText = msg.GetString(Text.TAG);
+        if (msgText.Contains("expected"))
+        {
+            var expected = Regex.Match(msgText, @"(?<=expected)[[0-9]+]").Value;
+            expected = expected.Remove(0, 1);
+            expected = expected.Remove(expected.Length - 1, 1);
+            
+            int.TryParse(expected, out _expectedMsgSeqNumLogOn);
+        }
+        else if(msgText.Contains("is closed") || msgText.Contains("Received"))
+        {
+            Log.Trace($"Logout, message: {msgText}");
+        }
+        else
+        {
+            msg.SetField(new ResetSeqNumFlag(ResetSeqNumFlag.NO));
+            _expectedMsgSeqNumLogOn = 0;
+        }
     }
 
     private (string reason, string responseTo, string text) MapCancelReject(OrderCancelReject rejection)

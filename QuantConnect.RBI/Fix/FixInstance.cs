@@ -62,7 +62,15 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 
     public void ToAdmin(Message message, SessionID sessionID)
     {
-        _messageHandler.EnrichMessage(message);
+        if (message.IsSetField(MsgType.TAG))
+        {
+            var msgType = message.GetString(MsgType.TAG);
+
+            if (!msgType.Equals(MsgType.REJECT) && !msgType.Equals(MsgType.BUSINESS_MESSAGE_REJECT))
+            {
+                _messageHandler.EnrichMessage(message);
+            }
+        }
     }
 
     public void FromAdmin(Message message, SessionID sessionID)
