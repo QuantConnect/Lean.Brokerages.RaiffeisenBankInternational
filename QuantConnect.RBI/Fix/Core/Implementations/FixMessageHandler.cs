@@ -73,6 +73,10 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
             case Logon logon:
                 logon.SetField(new ResetSeqNumFlag(ResetSeqNumFlag.NO));
                 break;
+            
+            case SequenceReset reset:
+                reset.SetField(new ResetSeqNumFlag(ResetSeqNumFlag.YES));
+                break;
         }
     }
 
@@ -87,7 +91,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
         }
         else
         {
-            Log.Trace($"OnLogon(): SenderCompId or TargetCompId is invalid ");
+            Log.Trace("OnLogon(): SenderCompId or TargetCompId is invalid ");
         }
     }
 
@@ -146,24 +150,35 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
 
     private (string reason, string responseTo, string text) MapCancelReject(OrderCancelReject rejection)
     {
-        var reason = rejection.CxlRejReason.getValue() switch
+        try
         {
-            CxlRejReason.TOO_LATE_TO_CANCEL => "Too late to cancel",
-            CxlRejReason.UNKNOWN_ORDER => "Unknown order",
-            CxlRejReason.BROKER_OPTION => "Broker option",
-            CxlRejReason.ORDER_ALREADY_IN_PENDING_CANCEL_OR_PENDING_REPLACE_STATUS => "Order already in Pending Cancel or Pending Replace status",
-            _ => string.Empty
-        };
+            var reason = rejection.CxlRejReason.getValue() switch
+            {
+                CxlRejReason.TOO_LATE_TO_CANCEL => "Too late to cancel",
+                CxlRejReason.UNKNOWN_ORDER => "Unknown order",
+                CxlRejReason.BROKER_OPTION => "Broker option",
+                CxlRejReason.ORDER_ALREADY_IN_PENDING_CANCEL_OR_PENDING_REPLACE_STATUS =>
+                    "Order already in Pending Cancel or Pending Replace status",
+                _ => string.Empty
+            };
 
-        var responseTo = rejection.CxlRejResponseTo.getValue() switch
+            var responseTo = rejection.CxlRejResponseTo.getValue() switch
+            {
+                CxlRejResponseTo.ORDER_CANCEL_REQUEST => "Order cancel request",
+                CxlRejResponseTo.ORDER_CANCEL_REPLACE_REQUEST => "Order cancel replace request",
+                _ => string.Empty
+            };
+
+            var text = rejection.Text.getValue();
+
+            return (reason, responseTo, text);
+        }
+
+        catch (Exception e)
         {
-            CxlRejResponseTo.ORDER_CANCEL_REQUEST => "Order cancel request",
-            CxlRejResponseTo.ORDER_CANCEL_REPLACE_REQUEST => "Order cancel replace request",
-            _ => string.Empty
-        };
-
-        var text = rejection.Text.getValue();
-
-        return (reason, responseTo, text);
+            Log.Trace($"Unexpected error {e.Message}");
+            
+            return (string.Empty, string.Empty, string.Empty);
+        }
     }
 }

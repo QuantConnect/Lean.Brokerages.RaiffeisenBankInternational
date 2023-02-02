@@ -9,6 +9,7 @@ using QuantConnect.RBI.Fix.Core.Interfaces;
 using QuantConnect.Securities;
 using QuickFix.Fields;
 using QuickFix.FIX42;
+using TimeInForce = QuickFix.Fields.TimeInForce;
 
 namespace QuantConnect.RBI.Fix.Core.Implementations;
 
@@ -25,16 +26,6 @@ public class FixSymbolController : IFixSymbolController
         
     }
 
-    public bool SubscribeToSymbol(Symbol symbol)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public bool UnsubscribeFromSymbol(Symbol symbol)
-    {
-        throw new System.NotImplementedException();
-    }
-    
     public bool PlaceOrder(Order order)
     {
         var ticker = _symbolMapper.GetBrokerageSymbol(order.Symbol);
@@ -53,15 +44,19 @@ public class FixSymbolController : IFixSymbolController
             Symbol = new QuickFix.Fields.Symbol(ticker),
             Side = side,
             TransactTime = new TransactTime(DateTime.UtcNow),
-            OrderQty = new OrderQty(order.Quantity),
+            OrderQty = new OrderQty(order.AbsoluteQuantity),
             SecurityType = securityType,
-            IDSource = new IDSource("4"),
+            IDSource = new IDSource(IDSource.ISIN_NUMBER),
             // change to ISINCode
             SecurityID = new SecurityID(securityId.ToString()),
-            //add timeinforce
             //add ex destination
-            Currency = new Currency(order.PriceCurrency)
+            Currency = new Currency(order.PriceCurrency),
+            TimeInForce = new TimeInForce(TimeInForce.DAY),
         };
+
+        var orderProperties = order.Properties as OrderProperties;
+
+        newOrder.ExDestination = new ExDestination(orderProperties.Exchange.ToString());
 
 
         switch (order.Type)
@@ -122,7 +117,7 @@ public class FixSymbolController : IFixSymbolController
             HandlInst = new HandlInst(HandlInst.AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION),
             Symbol = new QuickFix.Fields.Symbol(order.Symbol.Value),
             TransactTime = new TransactTime(order.Time),
-            OrderQty = new OrderQty(order.Quantity)
+            OrderQty = new OrderQty(order.Quantity),
         };
 
         var side = new Side(order.Direction == OrderDirection.Buy ? Side.BUY : Side.SELL);
@@ -163,16 +158,4 @@ public class FixSymbolController : IFixSymbolController
 
         return _session.Send(request);
     }
-    
-    // private IEnumerable<Securities.SecurityDefinition> GetSecurityDefinitions()
-    // {
-    //     var _securitiesDefinitionKey = Path.Combine(Globals.DataFolder, "symbol-properties", "security-database.csv");
-    //     
-    //     if (!Securities.SecurityDefinition.TryRead(_dataProvider, _securitiesDefinitionKey, out var securityDefinitions))
-    //     {
-    //         securityDefinitions = new List<Securities.SecurityDefinition>();
-    //         Log.Error($"SecurityDefinitionSymbolResolver(): No security definitions data loaded from file: {_securitiesDefinitionKey}");
-    //     }
-    //     return securityDefinitions;
-    // }
 }

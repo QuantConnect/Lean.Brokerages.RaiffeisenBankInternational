@@ -11,7 +11,7 @@ namespace QuantConnect.RBI.Fix.Core.Implementations;
 
 public class FixBrokerageController : IFixBrokerageController
 {
-    private readonly Dictionary<string, ExecutionReport> _orders = new();
+    private readonly Dictionary<string, ExecutionReport> _executions = new();
     private IFixSymbolController _symbolController;
 
     private readonly RBISymbolMapper _symbolMapper;
@@ -92,7 +92,7 @@ public class FixBrokerageController : IFixBrokerageController
 
     public List<Order> GetOpenOrders()
     {
-        return _orders.Values.Select(ConvertOrder).Where(o => o.Status.IsOpen()).ToList();
+        return _executions.Values.Select(ConvertOrder).Where(o => o.Status.IsOpen()).ToList();
     }
     
     public void Receive(ExecutionReport execution)
@@ -102,11 +102,11 @@ public class FixBrokerageController : IFixBrokerageController
         var orderStatus = execution.OrdStatus.getValue();
         if (orderStatus != OrdStatus.REJECTED)
         {
-            _orders[orderId] = execution;
+            _executions[orderId] = execution;
         }
         else
         {
-            _orders.Remove(orderId);
+            _executions.Remove(orderId);
         }
 
         ExecutionReport?.Invoke(this, execution);

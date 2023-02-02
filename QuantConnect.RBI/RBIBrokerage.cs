@@ -283,6 +283,11 @@ namespace QuantConnect.RBI
                 }
             }
 
+            if (report.OrdStatus.getValue() == QuickFix.Fields.OrdStatus.DONE_FOR_DAY)
+            {
+                //add logic
+            }
+
             OnOrderEvent(orderEvent);
         }
 

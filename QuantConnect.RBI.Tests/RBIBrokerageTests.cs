@@ -147,6 +147,10 @@ namespace QuantConnect.RBI.Tests
                 
             var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity, DateTime.UtcNow, price);
 
+            var properties = order.Properties as OrderProperties;
+
+            properties.Exchange = Exchange.EDGA;
+
             _orderProvider.Add(order);
 
             brokerage.PlaceOrder(order);
