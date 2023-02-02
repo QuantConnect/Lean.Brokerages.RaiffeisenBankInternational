@@ -284,8 +284,11 @@ namespace QuantConnect.RBI
             }
 
             if (report.OrdStatus.getValue() == QuickFix.Fields.OrdStatus.DONE_FOR_DAY)
-            {
-                //add logic
+            { 
+                var filledQuantity = report.LastShares.getValue();
+
+                orderEvent.FillQuantity = filledQuantity * (order.Direction == OrderDirection.Buy ? 1 : -1);
+                orderEvent.FillPrice = report.LastPx.getValue();
             }
 
             OnOrderEvent(orderEvent);

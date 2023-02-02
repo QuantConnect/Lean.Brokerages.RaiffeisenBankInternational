@@ -6,6 +6,7 @@ using QuantConnect.Logging;
 using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Connection.Interfaces;
 using QuantConnect.RBI.Fix.Core.Interfaces;
+using QuantConnect.RBI.Fix.Utils;
 using QuantConnect.Securities;
 using QuickFix.Fields;
 using QuickFix.FIX42;
@@ -51,7 +52,7 @@ public class FixSymbolController : IFixSymbolController
             SecurityID = new SecurityID(securityId.ToString()),
             //add ex destination
             Currency = new Currency(order.PriceCurrency),
-            TimeInForce = new TimeInForce(TimeInForce.DAY),
+            TimeInForce = Utility.ConvertTimeInForce(order.TimeInForce, order.Type),
         };
 
         var orderProperties = order.Properties as OrderProperties;
