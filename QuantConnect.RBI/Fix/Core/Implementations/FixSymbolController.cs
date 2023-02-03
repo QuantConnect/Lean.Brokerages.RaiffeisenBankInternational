@@ -59,7 +59,6 @@ public class FixSymbolController : IFixSymbolController
 
         newOrder.ExDestination = new ExDestination(orderProperties.Exchange.ToString());
 
-
         switch (order.Type)
         {
             case OrderType.Limit:
@@ -146,11 +145,12 @@ public class FixSymbolController : IFixSymbolController
                 request.StopPx = new StopPx(((StopMarketOrder) order).StopPrice);
                 break;
 
-            case OrderType.LimitIfTouched:
-                request.OrdType = new OrdType(OrdType.MARKET_IF_TOUCHED);
-                request.Price = new Price(((LimitIfTouchedOrder) order).LimitPrice);
-                request.StopPx = new StopPx(((LimitIfTouchedOrder) order).TriggerPrice);
-                break;
+            // if this is correct - uncomment
+            // case OrderType.LimitIfTouched:
+            //     request.OrdType = new OrdType(OrdType.MARKET_IF_TOUCHED);
+            //     request.Price = new Price(((LimitIfTouchedOrder) order).LimitPrice);
+            //     request.StopPx = new StopPx(((LimitIfTouchedOrder) order).TriggerPrice);
+            //     break;
             
             default:
                 Log.Trace($"RBI doesn't support this Order Type: {nameof(order.Type)}");

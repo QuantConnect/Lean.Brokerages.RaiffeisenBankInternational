@@ -9,6 +9,7 @@ using QuickFix;
 using QuickFix.Fields;
 using QuickFix.FIX42;
 using QuickFix.Transport;
+using Log = QuantConnect.Logging.Log;
 using Message = QuickFix.Message;
 
 namespace QuantConnect.RBI.Fix;
@@ -17,7 +18,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 {
     private readonly IFixMessageHandler _messageHandler;
     private readonly FixConfiguration _config;
-    private readonly SocketInitiator _initiator;
+    private SocketInitiator _initiator;
     private readonly SecurityExchangeHours _securityExchangeHours;
 
     private bool _isDisposed = false;
@@ -26,11 +27,6 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     {
         _messageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
         _config = config;
-
-        var settings = _config.GetDefaultSessionSettings();
-        var storeFactory = new FileStoreFactory(settings);
-
-        _initiator = new SocketInitiator(this, storeFactory, settings);
         _securityExchangeHours =
             MarketHoursDatabase.FromDataFolder().GetExchangeHours(Market.USA, null, SecurityType.Equity);
     }
@@ -45,10 +41,10 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 
     public void Initialize()
     {
-        if (!_messageHandler.IsSessionReady() && IsExchangeOpen())
+        var connected = this.Connect();
+        if (!connected)
         {
-            _initiator.Start();
-            Thread.Sleep(3000);
+            Log.Trace("Fix connection is not established");
         }
     }
 
@@ -127,5 +123,65 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     public void OnMessage(OrderCancelReject reject)
     {
         _messageHandler.OnMessage(reject, null);
+    }
+
+    private bool Connect()
+    {
+        try
+        {
+            if (!_messageHandler.IsSessionReady() && IsExchangeOpen())
+            {
+                var count = 0;
+                do
+                {
+                    _initiator.DisposeSafely();
+
+                    var settings = _config.GetDefaultSessionSettings();
+                    Log.Trace("Connecting started...");
+
+                    var storeFactory = new FileStoreFactory(settings);
+                    _initiator = new SocketInitiator(this, storeFactory, settings, new ScreenLogFactory(settings),
+                        _messageHandler.MessageFactory);
+                    _initiator.Start();
+
+                    if (_messageHandler.IsSessionReady())
+                    {
+                        Log.Trace($"Connected FIX session");
+                        return true;
+                    }
+
+                } while (!_messageHandler.IsSessionReady() && ++count <= 10);
+            }
+            else if (!IsExchangeOpen())
+            {
+                do
+                {
+                    _initiator.DisposeSafely();
+
+                    var settings = _config.GetDefaultSessionSettings();
+                    Log.Trace("Connecting started...");
+
+                    var storeFactory = new FileStoreFactory(settings);
+                    _initiator = new SocketInitiator(this, storeFactory, settings, new ScreenLogFactory(settings),
+                        _messageHandler.MessageFactory);
+                    _initiator.Start();
+
+                    if (_messageHandler.IsSessionReady())
+                    {
+                        Log.Trace($"Connected FIX session");
+                        return true;
+                    }
+
+                } while (!_messageHandler.IsSessionReady());
+            }
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            Log.Error(e);
+        }
+
+        return false;
     }
 }
