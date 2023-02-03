@@ -41,27 +41,21 @@ namespace QuantConnect.RBI
         private readonly IFixBrokerageController _fixBrokerageController;
         private readonly FixInstance _fixInstance;
         private readonly RBISymbolMapper _symbolMapper;
-
-        private readonly IDataAggregator _aggregator;
+        
         private readonly EventBasedDataQueueHandlerSubscriptionManager _subscriptionManager;
         private readonly IOrderProvider _orderProvider;
-        private readonly ISecurityProvider _securityProvider;
         private readonly IAlgorithm _algorithm;
         private readonly LiveNodePacket _job;
 
         public RBIBrokerage(
             FixConfiguration config,
-            IDataAggregator aggregator,
             IOrderProvider orderProvider,
-            ISecurityProvider securityProvider,
             IAlgorithm algorithm,
             LiveNodePacket job) : base("RBI")
         {
             _algorithm = algorithm;
             _job = job;
-            _aggregator = aggregator;
             _orderProvider = orderProvider;
-            _securityProvider = securityProvider;
 
             _symbolMapper = new RBISymbolMapper();
 
@@ -77,50 +71,7 @@ namespace QuantConnect.RBI
         /// Returns true if we're currently connected to the broker
         /// </summary>
         public override bool IsConnected => _fixInstance.IsConnected();
-        
-        
-        #region IDataQueueHandler
-        
-        /// <summary>
-        /// Subscribe to the specified configuration
-        /// </summary>
-        /// <param name="dataConfig">defines the parameters to subscribe to a data feed</param>
-        /// <param name="newDataAvailableHandler">handler to be fired on new data available</param>
-        /// <returns>The new enumerator for this subscription request</returns>
-        public IEnumerator<BaseData> Subscribe(SubscriptionDataConfig dataConfig, EventHandler newDataAvailableHandler)
-        {
-            if (!CanSubscribe(dataConfig.Symbol))
-            {
-                return null;
-            }
-        
-            var enumerator = _aggregator.Add(dataConfig, newDataAvailableHandler);
-            _subscriptionManager.Subscribe(dataConfig);
-        
-            return enumerator;
-        }
-        
-        /// <summary>
-        /// Removes the specified configuration
-        /// </summary>
-        /// <param name="dataConfig">Subscription config to be removed</param>
-        public void Unsubscribe(SubscriptionDataConfig dataConfig)
-        {
-            _subscriptionManager.Unsubscribe(dataConfig);
-            _aggregator.Remove(dataConfig);
-        }
-        
-        /// <summary>
-        /// Sets the job we're subscribing for
-        /// </summary>
-        /// <param name="job">Job we're subscribing for</param>
-        public void SetJob(LiveNodePacket job)
-        {
-            throw new NotImplementedException();
-        }
-        
-        #endregion
-        
+
         #region Brokerage
         
         /// <summary>
@@ -139,7 +90,7 @@ namespace QuantConnect.RBI
         /// <returns>The current holdings from the account</returns>
         public override List<Holding> GetAccountHoldings()
         {
-            return GetAccountHoldings(_job.BrokerageData, (_securityProvider as SecurityPortfolioManager)?.Securities.Values);
+            return GetAccountHoldings(_job.BrokerageData, _algorithm.Securities.Values);
         }
         
         /// <summary>
@@ -148,7 +99,7 @@ namespace QuantConnect.RBI
         /// <returns>The current cash balance for each currency available for trading</returns>
         public override List<CashAmount> GetCashBalance()
         {
-            return GetCashBalance(_job.BrokerageData, (_securityProvider as SecurityPortfolioManager)?.CashBook);
+            return GetCashBalance(_job.BrokerageData, _algorithm.Portfolio.CashBook);
         }
         
         /// <summary>
@@ -207,34 +158,6 @@ namespace QuantConnect.RBI
         }
         
         #endregion
-
-        private bool CanSubscribe(Symbol symbol)
-        {
-            if (symbol.Value.IndexOfInvariant("universe", true) != -1)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Adds the specified symbols to the subscription
-        /// </summary>
-        /// <param name="symbols">The symbols to be added keyed by SecurityType</param>
-        private bool Subscribe(IEnumerable<Symbol> symbols)
-        {
-            throw new NotImplementedException();
-        }
-        
-        /// <summary>
-        /// Removes the specified symbols to the subscription
-        /// </summary>
-        /// <param name="symbols">The symbols to be removed keyed by SecurityType</param>
-        private bool Unsubscribe(IEnumerable<Symbol> symbols)
-        {
-            throw new NotImplementedException();
-        }
 
         private void OnExecutionReport(object sender, ExecutionReport report)
         {

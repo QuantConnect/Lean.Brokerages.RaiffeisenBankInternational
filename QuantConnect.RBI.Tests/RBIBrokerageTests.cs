@@ -511,8 +511,7 @@ namespace QuantConnect.RBI.Tests
 
         private RBIBrokerage CreateBrokerage()
         {
-            return new RBIBrokerage(_fixConfiguration, _aggregationManager, _orderProvider, new SecurityProvider(),
-                _algorithm, _job);
+            return new RBIBrokerage(_fixConfiguration, _orderProvider, _algorithm, _job);
         }
 
         // protected override IBrokerage CreateBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider)
