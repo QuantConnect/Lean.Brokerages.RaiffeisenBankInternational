@@ -50,14 +50,13 @@ public class FixSymbolController : IFixSymbolController
             IDSource = new IDSource(IDSource.ISIN_NUMBER),
             // change to ISINCode
             SecurityID = new SecurityID(securityId.ToString()),
-            //add ex destination
             Currency = new Currency(order.PriceCurrency),
             TimeInForce = Utility.ConvertTimeInForce(order.TimeInForce, order.Type),
         };
 
         var orderProperties = order.Properties as OrderProperties;
 
-        newOrder.ExDestination = new ExDestination(orderProperties.Exchange.ToString());
+        newOrder.ExDestination = new ExDestination(orderProperties?.Exchange?.ToString() ?? string.Empty);
 
         switch (order.Type)
         {
