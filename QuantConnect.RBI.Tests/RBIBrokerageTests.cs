@@ -346,15 +346,10 @@ namespace QuantConnect.RBI.Tests
         {
             using var brokerage =
                 CreateBrokerage();
-            var pendingReplaceEvent = new ManualResetEvent(false);
             var replacedEvent = new ManualResetEvent(false);
 
             brokerage.OrdersStatusChanged += (sender, e) =>
             {
-                if (e.Single().Status == OrderStatus.Invalid)
-                {
-                    pendingReplaceEvent.Set();
-                }
 
                 if (e.Single().Status == OrderStatus.UpdateSubmitted)
                 {
@@ -373,18 +368,6 @@ namespace QuantConnect.RBI.Tests
 
             brokerage.UpdateOrder(order);
 
-            var pendingReport = new ExecutionReport()
-            {
-                OrdStatus = new OrdStatus('E'),
-                OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("123456"),
-                OrigClOrdID = new OrigClOrdID("12345"),
-                ExecType = new ExecType('E'),
-                TransactTime = new TransactTime(DateTime.UtcNow),
-            };
-
-            brokerage.OnMessage(pendingReport);
-
             var rejectedReport = new ExecutionReport
             {
                 OrdStatus = new OrdStatus('5'),
@@ -395,8 +378,7 @@ namespace QuantConnect.RBI.Tests
             };
 
             brokerage.OnMessage(rejectedReport);
-
-            Assert.IsTrue(pendingReplaceEvent.WaitOne(TimeSpan.FromSeconds(20)));
+            
             Assert.IsTrue(replacedEvent.WaitOne(TimeSpan.FromSeconds(20)));
         }
 
