@@ -19,6 +19,9 @@ using QuantConnect.Brokerages;
 using QuantConnect.Interfaces;
 using QuantConnect.Securities;
 using System.Collections.Generic;
+using QuantConnect.Configuration;
+using QuantConnect.Logging;
+using QuantConnect.RBI.Fix;
 
 namespace QuantConnect.RBI
 {
@@ -34,7 +37,13 @@ namespace QuantConnect.RBI
         /// The implementation of this property will create the brokerage data dictionary required for
         /// running live jobs. See <see cref="IJobQueueHandler.NextJob"/>
         /// </remarks>
-        public override Dictionary<string, string> BrokerageData { get; }
+        public override Dictionary<string, string> BrokerageData => new()
+        {
+            { "rbi-host", Config.Get("rbi-host") },
+            { "rbi-port", Config.Get("rbi-port") },
+            {"rbi-sender-comp-id", Config.Get("rbi-sender-comp-id") },
+            {"rbi-target-comp-id", Config.Get("rbi-target-comp-id") }
+        };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RBIBrokerageFactory"/> class
@@ -60,7 +69,28 @@ namespace QuantConnect.RBI
         /// <returns>A new brokerage instance</returns>
         public override IBrokerage CreateBrokerage(LiveNodePacket job, IAlgorithm algorithm)
         {
-            throw new NotImplementedException();
+            var errors = new List<string>();
+            
+            var fixConfig = new FixConfiguration()
+            {
+                Host = Read<string>(job.BrokerageData, "wolverine-host", errors),
+                Port = Read<string>(job.BrokerageData, "wolverine-port", errors),
+                SenderCompId = Read<string>(job.BrokerageData, "wolverine-sender-comp-id", errors),
+                TargetCompId = Read<string>(job.BrokerageData, "wolverine-target-comp-id", errors),
+            };
+
+            Log.Trace(
+                $"CreateBrokerage(): Host {fixConfig.Host}, Port {fixConfig.Port}," +
+                $" SenderCompId {fixConfig.SenderCompId}, TargetCompId {fixConfig.TargetCompId}");
+
+            if (errors.Count > 0)
+            {
+                throw new Exception(string.Join(Environment.NewLine, errors));
+            }
+
+            var brokerage = new RBIBrokerage(fixConfig, algorithm.Transactions, algorithm, job);
+
+            return brokerage;
         }
 
         /// <summary>
@@ -68,7 +98,7 @@ namespace QuantConnect.RBI
         /// </summary>
         public override void Dispose()
         {
-            throw new NotImplementedException();
+            
         }
     }
 }

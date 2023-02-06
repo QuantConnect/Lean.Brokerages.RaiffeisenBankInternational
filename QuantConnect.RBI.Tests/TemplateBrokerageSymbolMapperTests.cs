@@ -14,22 +14,25 @@
 */
 
 using NUnit.Framework;
+using QuantConnect.RBI.Fix.Core;
+using QuantConnect.Tests;
 
 namespace QuantConnect.RBI.Tests
 {
-    [TestFixture, Ignore("Not implemented")]
+    [TestFixture]
     public class TemplateBrokerageSymbolMapperTests
     {
-        [Test]
-        public void ReturnsCorrectLeanSymbol()
+        [TestCase("NVAX", SecurityType.Equity, "NVAX")]
+        [TestCase("GOOCV", SecurityType.Option, "GOOCV")]
+        public void ReturnsCorrectBrokerageSymbol(string symbolValue, SecurityType symbolSecurityType, string expectedBrokerageSymbol)
         {
+            var leanSymbol = Symbol.Create(symbolValue, symbolSecurityType, Market.USA);
 
-        }
+            var symbolMapper = new RBISymbolMapper();
 
-        [Test]
-        public void ReturnsCorrectBrokerageSymbol()
-        {
+            var symbolBrokerage = symbolMapper.GetBrokerageSymbol(leanSymbol);
 
+            Assert.That(symbolBrokerage, Is.EqualTo(expectedBrokerageSymbol));
         }
     }
 }

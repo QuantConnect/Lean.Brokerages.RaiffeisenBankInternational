@@ -1,4 +1,9 @@
 {
   "data-folder": "../../../../Lean/Data/",
-  "data-directory": "../../../../Lean/Data/"
+  "data-directory": "../../../../Lean/Data/",
+  
+  "rbi-host": "",
+  "rbi-port": "",
+  "rbi-sender-comp-id": "",
+  "rbi-target-comp-id": ""
 }

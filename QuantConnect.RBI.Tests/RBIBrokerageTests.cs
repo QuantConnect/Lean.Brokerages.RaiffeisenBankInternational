@@ -19,15 +19,13 @@ using System.Linq;
 using System.Threading;
 using NUnit.Framework;
 using QuantConnect.Algorithm;
+using QuantConnect.Configuration;
 using QuantConnect.Tests;
-using QuantConnect.Interfaces;
-using QuantConnect.Lean.Engine.DataFeeds;
 using QuantConnect.Orders;
 using QuantConnect.Packets;
 using QuantConnect.RBI.Fix;
 using QuantConnect.RBI.Fix.Core;
 using QuantConnect.RBI.Fix.Core.Implementations;
-using QuantConnect.Securities;
 using QuantConnect.Tests.Brokerages;
 using QuickFix;
 using QuickFix.Fields;
@@ -40,15 +38,14 @@ namespace QuantConnect.RBI.Tests
     {
         private readonly FixConfiguration _fixConfiguration = new()
         {
-            SenderCompId = "CLIENT1",
-            TargetCompId = "SIMPLE",
-            Host = "127.0.0.1",
-            Port = 5080
+            SenderCompId = Config.Get("rbi-sender-comp-id"),
+            TargetCompId = Config.Get("rbi-target-comp-id"),
+            Host = Config.Get("rbi-host"),
+            Port = Config.Get("rbi-port")
         };
-        private readonly QCAlgorithm _algorithm = new QCAlgorithm();
-        private readonly LiveNodePacket _job = new LiveNodePacket();
-        private readonly OrderProvider _orderProvider = new OrderProvider(new List<Order>());
-        private readonly AggregationManager _aggregationManager = new AggregationManager();
+        private readonly QCAlgorithm _algorithm = new ();
+        private readonly LiveNodePacket _job = new ();
+        private readonly OrderProvider _orderProvider = new (new List<Order>());
 
 
         /// <summary>
@@ -70,6 +67,7 @@ namespace QuantConnect.RBI.Tests
         [TestCase("AAPL",5, 500)]
         [TestCase("DLF", 10, 10000)]
         [TestCase("GOOCV", 2, 230)]
+        [Ignore("Manual test for receiving fix protocol properly")]
         public void PlaceOrder(string ticker, decimal quantity, decimal price)
         {
             var symbolMapper = new RBISymbolMapper();
@@ -81,11 +79,13 @@ namespace QuantConnect.RBI.Tests
             fixInstance.Initialize();
 
 
-            var sessionId = new SessionID(_fixConfiguration.FixVersionString, _fixConfiguration.SenderCompId, _fixConfiguration.TargetCompId);
+            var sessionId = new SessionID(_fixConfiguration.FixVersionString, _fixConfiguration.SenderCompId,
+                _fixConfiguration.TargetCompId);
 
             fixInstance.OnLogon(sessionId);
 
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity, DateTime.UtcNow, price);
+            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
+                DateTime.UtcNow, price);
             var actual = controller.PlaceOrder(order);
 
 
@@ -94,10 +94,6 @@ namespace QuantConnect.RBI.Tests
             var msgSeqNum = actualString.Substring(18, 2);
 
             actualString = actualString.Remove(31, 25);
-            
-            // var expectedString = $"8=FIX.4.2\u000135=D\u000134={msgSeqNum}\u000149=CLIENT1\u000156=SIMPLE\u000111={actual.ClOrdID}\u000115=\u000121=1\u000122=4\u000138={quantity}\u000140=1\u000144={price}\u000148={ticker} 2T\u000154=1\u000155={ticker}\u000160={actual.TransactTime}\u0001167=CS\u000110={actual.CheckSum()}\u0001";
-            //
-            // Assert.AreEqual(expectedString, actualString);
         }
 
         [Test]
@@ -111,11 +107,16 @@ namespace QuantConnect.RBI.Tests
 
             fixInstance.Initialize();
 
-            var sessionId = new SessionID(_fixConfiguration.FixVersionString, _fixConfiguration.SenderCompId, _fixConfiguration.TargetCompId);
+            var sessionId = new SessionID(_fixConfiguration.FixVersionString, _fixConfiguration.SenderCompId,
+                _fixConfiguration.TargetCompId);
 
             fixInstance.OnLogon(sessionId);
-            
-            var order = new MarketOrder(Symbol.Create("DLF", SecurityType.Equity, Market.USA), 1, DateTime.UtcNow, 500);
+
+            var order = new MarketOrder(
+                Symbol.Create("DLF", SecurityType.Equity, Market.USA),
+                1,
+                DateTime.UtcNow,
+                500);
             controller.PlaceOrder(order);
 
             controller.UpdateOrder(order);
@@ -144,8 +145,9 @@ namespace QuantConnect.RBI.Tests
             };
 
             brokerage.Connect(_fixConfiguration);
-                
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity, DateTime.UtcNow, price);
+
+            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
+                DateTime.UtcNow, price);
 
             var properties = order.Properties as OrderProperties;
 
@@ -217,7 +219,8 @@ namespace QuantConnect.RBI.Tests
 
             brokerage.Connect(_fixConfiguration);
 
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity, DateTime.UtcNow, price);
+            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
+                DateTime.UtcNow, price);
 
             _orderProvider.Add(order);
 
@@ -303,7 +306,8 @@ namespace QuantConnect.RBI.Tests
 
             brokerage.Connect(_fixConfiguration);
 
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity, DateTime.UtcNow, price);
+            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
+                DateTime.UtcNow, price);
 
             _orderProvider.Add(order);
 
@@ -360,7 +364,8 @@ namespace QuantConnect.RBI.Tests
 
             brokerage.Connect(_fixConfiguration);
 
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity, DateTime.UtcNow, price);
+            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
+                DateTime.UtcNow, price);
 
             _orderProvider.Add(order);
 
@@ -404,7 +409,8 @@ namespace QuantConnect.RBI.Tests
 
             brokerage.Connect(_fixConfiguration);
 
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity, DateTime.UtcNow, price);
+            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
+                DateTime.UtcNow, price);
 
             _orderProvider.Add(order);
 
@@ -446,7 +452,8 @@ namespace QuantConnect.RBI.Tests
 
             brokerage.Connect(_fixConfiguration);
 
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity, DateTime.UtcNow, price);
+            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
+                DateTime.UtcNow, price);
 
             _orderProvider.Add(order);
 
@@ -491,7 +498,8 @@ namespace QuantConnect.RBI.Tests
 
             brokerage.Connect(_fixConfiguration);
 
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity, DateTime.UtcNow, price);
+            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
+                DateTime.UtcNow, price);
 
             _orderProvider.Add(order);
 
@@ -513,22 +521,5 @@ namespace QuantConnect.RBI.Tests
         {
             return new RBIBrokerage(_fixConfiguration, _orderProvider, _algorithm, _job);
         }
-
-        // protected override IBrokerage CreateBrokerage(IOrderProvider orderProvider, ISecurityProvider securityProvider)
-        // {
-        //     return new RBIBrokerage();
-        // }
-        //
-        // protected override Symbol Symbol { get; }
-        // protected override SecurityType SecurityType { get; }
-        // protected override bool IsAsync()
-        // {
-        //     return true;
-        // }
-        //
-        // protected override decimal GetAskPrice(Symbol symbol)
-        // {
-        //     return 0;
-        // }
     }
 }

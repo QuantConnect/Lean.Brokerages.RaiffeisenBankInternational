@@ -7,10 +7,10 @@ public class FixConfiguration
     public string FixVersionString { get; set; } = "FIX.4.2";
 
     // market data session
-    public string SenderCompId { get; set; } = "CLIENT1";
-    public string TargetCompId { get; set; } = "SIMPLE";
-    public string Host { get; set; } = "192.168.1.103";
-    public long Port { get; set; } = 5080;
+    public string SenderCompId { get; set; }
+    public string TargetCompId { get; set; }
+    public string Host { get; set; }
+    public string Port { get; set; }
 
     public SessionSettings GetDefaultSessionSettings()
     {
@@ -37,8 +37,8 @@ public class FixConfiguration
         var orderRoutingDic = new Dictionary();
         orderRoutingDic.SetString("SenderCompID", SenderCompId);
         orderRoutingDic.SetString("TargetCompID", TargetCompId);
-        orderRoutingDic.SetString("SocketConnectHost", "127.0.0.1");
-        orderRoutingDic.SetLong("SocketConnectPort", Port);
+        orderRoutingDic.SetString("SocketConnectHost", Host);
+        orderRoutingDic.SetString("SocketConnectPort", Port);
 
         var orderRoutingSessionId = new SessionID(FixVersionString, SenderCompId, TargetCompId);
         settings.Set(orderRoutingSessionId, orderRoutingDic);

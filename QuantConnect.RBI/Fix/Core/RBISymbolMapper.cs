@@ -28,11 +28,11 @@ public class RBISymbolMapper : ISymbolMapper
     }
 
     public Symbol GetLeanSymbol(string brokerageSymbol, SecurityType securityType, string market,
-        DateTime expirationDate = new (), decimal strike = 0, OptionRight optionRight = OptionRight.Call)
+        DateTime expirationDate = default(DateTime), decimal strike = 0, OptionRight optionRight = OptionRight.Call)
     {
         throw new NotImplementedException();
     }
-    
+
     public SecurityType GetLeanSecurityType(string productType)
     {
         if (!_mapSecurityTypeToLeanSecurityType.TryGetValue(productType, out var securityType))

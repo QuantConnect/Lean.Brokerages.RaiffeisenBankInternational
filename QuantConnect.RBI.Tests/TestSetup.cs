@@ -19,6 +19,7 @@ using NUnit.Framework;
 using System.Collections;
 using QuantConnect.Logging;
 using QuantConnect.Configuration;
+using QuantConnect.Tests;
 
 namespace QuantConnect.RBI.Tests
 {
@@ -63,6 +64,8 @@ namespace QuantConnect.RBI.Tests
             Log.LogHandler = new CompositeLogHandler();
             Log.Trace("TestSetup(): starting...");
             ReloadConfiguration();
+            
+            TestGlobals.Initialize();
         }
 
         private static TestCaseData[] TestParameters
