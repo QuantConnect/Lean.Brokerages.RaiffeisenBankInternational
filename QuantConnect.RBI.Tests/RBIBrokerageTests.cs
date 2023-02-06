@@ -159,7 +159,6 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 220, 230)]
-        [Ignore("")]
         public void PlaceOrderWithPartialFill(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -263,7 +262,6 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
-        [Ignore("")]
         public void PlaceOrderWithReject(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -326,7 +324,6 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
-        [Ignore("")]
         public void ModifyOrder(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
