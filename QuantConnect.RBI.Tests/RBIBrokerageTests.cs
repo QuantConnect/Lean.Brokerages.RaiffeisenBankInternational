@@ -370,7 +370,6 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
-        [Ignore("")]
         public void ModifyOrderReject(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -403,7 +402,6 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
-        [Ignore("")]
         public void CancelOrder(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -450,7 +448,6 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
-        [Ignore("")]
         public void CancelOrderReject(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
