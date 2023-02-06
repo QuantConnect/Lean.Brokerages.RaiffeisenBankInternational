@@ -80,12 +80,12 @@ public class FixSymbolController : IFixSymbolController
                 newOrder.OrdType = new OrdType(OrdType.STOP);
                 newOrder.StopPx = new StopPx(((StopMarketOrder) order).StopPrice);
                 break;
-            
-            case OrderType.LimitIfTouched:
-                newOrder.OrdType = new OrdType(OrdType.MARKET_IF_TOUCHED);
-                newOrder.Price = new Price(((LimitIfTouchedOrder) order).LimitPrice);
-                newOrder.StopPx = new StopPx(((LimitIfTouchedOrder) order).TriggerPrice);
-                break;
+            // if this is correct - uncomment
+            // case OrderType.LimitIfTouched:
+            //     newOrder.OrdType = new OrdType(OrdType.MARKET_IF_TOUCHED);
+            //     newOrder.Price = new Price(((LimitIfTouchedOrder) order).LimitPrice);
+            //     newOrder.StopPx = new StopPx(((LimitIfTouchedOrder) order).TriggerPrice);
+            //     break;
             
             default:
                 Log.Trace($"RBI doesn't support this Order Type: {nameof(order.Type)}");
