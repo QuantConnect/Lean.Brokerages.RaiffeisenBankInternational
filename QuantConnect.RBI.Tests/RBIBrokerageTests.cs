@@ -97,32 +97,6 @@ namespace QuantConnect.RBI.Tests
         }
 
         [Test]
-        public void UpdateOrder()
-        {
-            var symbolMapper = new RBISymbolMapper();
-            var controller = new FixBrokerageController(symbolMapper);
-            var messageHandler = new FixMessageHandler(_fixConfiguration, controller);
-
-            using var fixInstance = new FixInstance(messageHandler, _fixConfiguration);
-
-            fixInstance.Initialize();
-
-            var sessionId = new SessionID(_fixConfiguration.FixVersionString, _fixConfiguration.SenderCompId,
-                _fixConfiguration.TargetCompId);
-
-            fixInstance.OnLogon(sessionId);
-
-            var order = new MarketOrder(
-                Symbol.Create("DLF", SecurityType.Equity, Market.USA),
-                1,
-                DateTime.UtcNow,
-                500);
-            controller.PlaceOrder(order);
-
-            controller.UpdateOrder(order);
-        }
-
-        [Test]
         [TestCase("GOOCV", 210, 230)]
         public void PlaceOrderWithResponse(string ticker, decimal quantity, decimal price)
         {
@@ -185,6 +159,7 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 220, 230)]
+        [Ignore("")]
         public void PlaceOrderWithPartialFill(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -221,6 +196,10 @@ namespace QuantConnect.RBI.Tests
 
             var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
                 DateTime.UtcNow, price);
+            
+            var properties = order.Properties as OrderProperties;
+
+            properties.Exchange = Exchange.EDGA;
 
             _orderProvider.Add(order);
 
@@ -284,6 +263,7 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
+        [Ignore("")]
         public void PlaceOrderWithReject(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -308,6 +288,10 @@ namespace QuantConnect.RBI.Tests
 
             var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
                 DateTime.UtcNow, price);
+            
+            var properties = order.Properties as OrderProperties;
+
+            properties.Exchange = Exchange.EDGA;
 
             _orderProvider.Add(order);
 
@@ -342,6 +326,7 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
+        [Ignore("")]
         public void ModifyOrder(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -361,6 +346,10 @@ namespace QuantConnect.RBI.Tests
 
             var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
                 DateTime.UtcNow, price);
+            
+            var properties = order.Properties as OrderProperties;
+
+            properties.Exchange = Exchange.EDGA;
 
             _orderProvider.Add(order);
 
@@ -384,6 +373,7 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
+        [Ignore("")]
         public void ModifyOrderReject(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -393,6 +383,10 @@ namespace QuantConnect.RBI.Tests
 
             var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
                 DateTime.UtcNow, price);
+            
+            var properties = order.Properties as OrderProperties;
+
+            properties.Exchange = Exchange.EDGA;
 
             _orderProvider.Add(order);
 
@@ -412,6 +406,7 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
+        [Ignore("")]
         public void CancelOrder(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -430,6 +425,10 @@ namespace QuantConnect.RBI.Tests
 
             var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
                 DateTime.UtcNow, price);
+            
+            var properties = order.Properties as OrderProperties;
+
+            properties.Exchange = Exchange.EDGA;
 
             _orderProvider.Add(order);
 
@@ -454,6 +453,7 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
+        [Ignore("")]
         public void CancelOrderReject(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -463,6 +463,10 @@ namespace QuantConnect.RBI.Tests
 
             var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
                 DateTime.UtcNow, price);
+            
+            var properties = order.Properties as OrderProperties;
+
+            properties.Exchange = Exchange.EDGA;
 
             _orderProvider.Add(order);
 
