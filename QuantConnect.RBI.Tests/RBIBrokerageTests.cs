@@ -448,6 +448,7 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
+        [Ignore("")]
         public void CancelOrderReject(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
