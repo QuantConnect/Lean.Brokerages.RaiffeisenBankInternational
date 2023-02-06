@@ -19,7 +19,7 @@ using QuantConnect.Util;
 
 namespace QuantConnect.RBI.Tests
 {
-    [TestFixture, Ignore("This test requires a configured TemplateBrokerageFactory")]
+    [TestFixture]
     public class TemplateBrokerageFactoryTests
     {
         [Test]
