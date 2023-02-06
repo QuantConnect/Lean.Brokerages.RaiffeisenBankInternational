@@ -13,10 +13,6 @@ public interface IFixBrokerageController
 
     void Unregister(IFixSymbolController controller);
 
-    void Subscribe(Symbol symbol);
-
-    void Unsubscribe(Symbol symbol);
-
     bool PlaceOrder(Order order);
 
     bool CancelOrder(Order order);

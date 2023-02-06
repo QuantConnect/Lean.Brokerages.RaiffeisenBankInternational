@@ -58,7 +58,7 @@ namespace QuantConnect.RBI
         /// <param name="orderProvider">The order provider</param>
         public override IBrokerageModel GetBrokerageModel(IOrderProvider orderProvider)
         {
-            throw new NotImplementedException();
+            return new DefaultBrokerageModel();
         }
 
         /// <summary>

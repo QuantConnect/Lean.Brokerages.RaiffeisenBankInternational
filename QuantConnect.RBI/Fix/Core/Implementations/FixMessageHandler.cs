@@ -94,6 +94,10 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
         {
             _fixSymbolController = new FixSymbolController(new RBIFixConnection(sessionId));
             _brokerageController.Register(_fixSymbolController);
+            if (_expectedMsgSeqNumLogOn > 0)
+            {
+                _expectedMsgSeqNumLogOn = 0;
+            }
         }
         else
         {
