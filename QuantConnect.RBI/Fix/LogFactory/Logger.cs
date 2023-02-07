@@ -1,13 +1,21 @@
-﻿using QuickFix;
+﻿using QuantConnect.Util;
+using QuickFix;
 using Log = QuantConnect.Logging.Log;
 
 namespace QuantConnect.RBI.Fix.LogFactory;
 
 public class Logger : ILog
 {
+    private bool _isDisposed = false;
     public void Dispose()
     {
-        throw new NotImplementedException();
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        this.DisposeSafely();
     }
 
     public void Clear()

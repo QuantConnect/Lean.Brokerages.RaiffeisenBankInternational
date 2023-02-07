@@ -20,6 +20,10 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     private readonly FixConfiguration _config;
     private SocketInitiator _initiator;
     private readonly SecurityExchangeHours _securityExchangeHours;
+    private readonly LogFactory.LogFactory _logFactory;
+    private CancellationTokenSource _cancellationTokenSource;
+    private readonly ManualResetEvent _loginEvent = new (false);
+    private volatile bool _connected;
 
     private bool _isDisposed = false;
 
@@ -29,23 +33,39 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
         _config = config;
         _securityExchangeHours =
             MarketHoursDatabase.FromDataFolder().GetExchangeHours(Market.USA, null, SecurityType.Equity);
+        _logFactory = new LogFactory.LogFactory();
     }
     
     public bool IsConnected()
     {
-        return !_initiator.IsStopped &&
-               _initiator.GetSessionIDs()
-                   .Select(Session.LookupSession)
-                   .All(session => session != null && session.IsLoggedOn);
+        return _connected && !_isDisposed;
     }
 
     public void Initialize()
     {
-        var connected = this.Connect();
-        if (!connected)
+        _cancellationTokenSource = new CancellationTokenSource();
+        _connected = Connect();
+        Task.Factory.StartNew(() =>
         {
-            Log.Trace("Fix connection is not established");
-        }
+            var retry = 0;
+            var timeoutLoop = TimeSpan.FromMinutes(1);
+            while (!_cancellationTokenSource.Token.IsCancellationRequested)
+            {
+                if (_cancellationTokenSource.Token.WaitHandle.WaitOne(timeoutLoop))
+                {
+                    break;
+                }
+
+                if (!Connect())
+                {
+                   Log.Error($"FixInstance(): connection failed");
+                }
+                else
+                {
+                    retry = 0;
+                }
+            }
+        });
     }
 
     public void Terminate()
@@ -92,11 +112,13 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     public void OnLogout(SessionID sessionID)
     {
         _messageHandler.OnLogout(sessionID);
+        _loginEvent.Set();
     }
 
     public void OnLogon(SessionID sessionID)
     {
         _messageHandler.OnLogon(sessionID);
+        _loginEvent.Set();
     }
 
     public void Dispose()
@@ -135,53 +157,62 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
                 do
                 {
                     _initiator.DisposeSafely();
-
+                    _loginEvent.Reset();
+                    
                     var settings = _config.GetDefaultSessionSettings();
+                    var sessionId = settings.GetSessions().Single();
                     Log.Trace("Connecting started...");
-
+        
                     var storeFactory = new FileStoreFactory(settings);
-                    _initiator = new SocketInitiator(this, storeFactory, settings, new ScreenLogFactory(settings),
+                    _initiator = new SocketInitiator(this, storeFactory, settings, _logFactory,
                         _messageHandler.MessageFactory);
                     _initiator.Start();
 
+                    if (!_loginEvent.WaitOne(TimeSpan.FromSeconds(15), _cancellationTokenSource.Token))
+                    {
+                        Log.Error($"FixInstance.TryConnect({sessionId}): Timeout initializing FIX session.");
+                    }
+        
                     if (_messageHandler.IsSessionReady())
                     {
                         Log.Trace($"Connected FIX session");
                         return true;
                     }
-
+        
                 } while (!_messageHandler.IsSessionReady() && ++count <= 10);
+
+                return false;
             }
             else if (!IsExchangeOpen())
             {
                 do
                 {
                     _initiator.DisposeSafely();
-
+            
                     var settings = _config.GetDefaultSessionSettings();
                     Log.Trace("Connecting started...");
-
+            
                     var storeFactory = new FileStoreFactory(settings);
                     _initiator = new SocketInitiator(this, storeFactory, settings, new ScreenLogFactory(settings),
                         _messageHandler.MessageFactory);
                     _initiator.Start();
-
+            
                     if (_messageHandler.IsSessionReady())
                     {
                         Log.Trace($"Connected FIX session");
                         return true;
                     }
-
+            
                 } while (!_messageHandler.IsSessionReady());
             }
-
+        
             return true;
         }
         catch (Exception e)
         {
             Log.Error(e);
         }
-
+        
         return false;
     }
 }

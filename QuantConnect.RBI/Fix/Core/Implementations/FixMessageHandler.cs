@@ -21,9 +21,9 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
     private readonly FixConfiguration _config;
     private readonly IFixBrokerageController _brokerageController;
     private IFixSymbolController _fixSymbolController;
-    
-    private int _expectedMsgSeqNumLogOn = default;
-    public bool IsReady { get; set; }
+    private ConcurrentDictionary<SessionID, IFixSymbolController> _sessionHandlers = new();
+
+    private int _expectedMsgSeqNumLogOn;
 
     public FixMessageHandler(FixConfiguration config, IFixBrokerageController brokerageController)
     {
@@ -33,24 +33,20 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
 
     public bool IsSessionReady()
     {
-        return IsReady;
+        return !_sessionHandlers.IsEmpty && 
+               _sessionHandlers.All(kvp => Session.LookupSession(kvp.Key).IsLoggedOn);
     }
 
     public IMessageFactory MessageFactory { get; set; }
     
     public void Handle(Message message, SessionID sessionId)
     {
-        if (_brokerageController == null)
+        if (!_sessionHandlers.TryGetValue(sessionId, out var handler))
         {
             Log.Trace($"Handle(): No controller was registered");
         }
         
         Crack(message, sessionId);
-    }
-    
-    public void OnRecoveryCompleted()
-    {
-        IsReady = true;
     }
 
     public void HandleAdminMessage(Message message, SessionID sessionId)
@@ -73,6 +69,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
         {
             case Logon logon:
                 logon.SetField(new ResetSeqNumFlag(ResetSeqNumFlag.NO));
+                logon.SetField(new EncryptMethod(EncryptMethod.NONE));
                 if (_expectedMsgSeqNumLogOn > 0)
                 {
                     logon.SetField(new MsgSeqNum(_expectedMsgSeqNumLogOn));
@@ -92,8 +89,8 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
 
         if (sessionId.SenderCompID == _config.SenderCompId && sessionId.TargetCompID == _config.TargetCompId)
         {
-            _fixSymbolController = new FixSymbolController(new RBIFixConnection(sessionId));
-            _brokerageController.Register(_fixSymbolController);
+            var session = new RBIFixConnection(sessionId);
+            _sessionHandlers[sessionId] = new FixSymbolController(session, _brokerageController);
             if (_expectedMsgSeqNumLogOn > 0)
             {
                 _expectedMsgSeqNumLogOn = 0;
@@ -109,7 +106,11 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
     {
         if (sessionId.SenderCompID == _config.SenderCompId && sessionId.TargetCompID == _config.TargetCompId)
         {
-            _brokerageController.Unregister(_fixSymbolController);
+            if (!_sessionHandlers.TryGetValue(sessionId, out var handler))
+            {
+                return;
+            }
+            _brokerageController.Unregister(handler);
         }
     }
 

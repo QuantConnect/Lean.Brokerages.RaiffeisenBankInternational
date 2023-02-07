@@ -5,8 +5,6 @@ namespace QuantConnect.RBI.Fix;
 public class FixConfiguration
 {
     public string FixVersionString { get; set; } = "FIX.4.2";
-
-    // market data session
     public string SenderCompId { get; set; }
     public string TargetCompId { get; set; }
     public string Host { get; set; }
@@ -18,7 +16,7 @@ public class FixConfiguration
 
         var defaultDic = new Dictionary();
         defaultDic.SetString("ConnectionType", "initiator");
-        defaultDic.SetString("ReconnectInterval", "1");
+        defaultDic.SetString("ReconnectInterval", "2");
         defaultDic.SetString("FileStorePath", @"store");
         defaultDic.SetString("FileLogPath", "log");
         defaultDic.SetString("StartTime", "00:00:00");
@@ -30,7 +28,7 @@ public class FixConfiguration
         defaultDic.SetBool("UseLocalTime", false);
         defaultDic.SetBool("SendLogoutBeforeDisconnectFromTimeout", false);
         defaultDic.SetString("HeartBtInt", "30");
-        defaultDic.SetString("LogonTimeout", "15");
+        defaultDic.SetString("LogonTimeout", "5");
 
         settings.Set(defaultDic);
 
