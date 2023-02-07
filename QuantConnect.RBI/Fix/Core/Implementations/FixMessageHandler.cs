@@ -47,11 +47,6 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
         
         Crack(message, sessionId);
     }
-    
-    public void OnRecoveryCompleted()
-    {
-        IsReady = true;
-    }
 
     public void HandleAdminMessage(Message message, SessionID sessionId)
     {

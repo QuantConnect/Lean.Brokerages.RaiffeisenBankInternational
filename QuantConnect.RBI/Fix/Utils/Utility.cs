@@ -28,8 +28,9 @@ namespace QuantConnect.RBI.Fix.Utils
                 case OrdType.STOP_LIMIT:
                     return OrderType.StopLimit;
                 
-                case OrdType.MARKET_ON_CLOSE:
-                    return OrderType.MarketOnClose;
+                //uncomment if it's correct
+                // case OrdType.MARKET_IF_TOUCHED:
+                //     return OrderType.LimitIfTouched;
 
                 default:
                     throw new NotSupportedException($"Unsupported order type: {orderType}");

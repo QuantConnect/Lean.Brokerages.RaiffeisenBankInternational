@@ -20,6 +20,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     private readonly FixConfiguration _config;
     private SocketInitiator _initiator;
     private readonly SecurityExchangeHours _securityExchangeHours;
+    private readonly LogFactory.LogFactory _logFactory;
 
     private bool _isDisposed = false;
 
@@ -29,6 +30,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
         _config = config;
         _securityExchangeHours =
             MarketHoursDatabase.FromDataFolder().GetExchangeHours(Market.USA, null, SecurityType.Equity);
+        _logFactory = new LogFactory.LogFactory();
     }
     
     public bool IsConnected()
@@ -140,7 +142,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
                     Log.Trace("Connecting started...");
 
                     var storeFactory = new FileStoreFactory(settings);
-                    _initiator = new SocketInitiator(this, storeFactory, settings, new ScreenLogFactory(settings),
+                    _initiator = new SocketInitiator(this, storeFactory, settings, _logFactory,
                         _messageHandler.MessageFactory);
                     _initiator.Start();
 
