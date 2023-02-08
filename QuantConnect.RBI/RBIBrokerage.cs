@@ -133,6 +133,9 @@ namespace QuantConnect.RBI
         public void Connect(FixConfiguration config)
         {
             _fixInstance.Initialize();
+            var sessionId = new SessionID(config.FixVersionString, config.SenderCompId, config.TargetCompId);
+
+            _fixInstance.OnLogon(sessionId);
         }
 
         public override void Connect()
