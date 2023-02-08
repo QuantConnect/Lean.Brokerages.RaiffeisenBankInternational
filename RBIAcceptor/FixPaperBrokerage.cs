@@ -6,10 +6,11 @@ using Message = QuickFix.Message;
 
 namespace RBIAcceptor;
 
-public class FixPaperBrokerage : IApplication
+public class FixPaperBrokerage : MessageCracker, IApplication
 {
     private int _orderID = 0;
     private int _execID = 0;
+    private static readonly decimal DEFAULT_MARKET_PRICE = 10;
 
     public static FixPaperBrokerage Create()
     {
@@ -85,16 +86,14 @@ public class FixPaperBrokerage : IApplication
 
         Console.WriteLine($"FixGatewayBrokerage.ToApp({sessionID}): {extraLog}{message}");
     }
-
-
-    private void OnMessage(NewOrderSingle n, SessionID s)
+    public void OnMessage(NewOrderSingle n, SessionID s)
     {
-        var symbol = n.Symbol;
-        var side = n.Side;
-        var ordType = n.OrdType;
-        var orderQty = n.OrderQty;
-        var clOrdID = n.ClOrdID;
-        var price = new Price(10);
+        Symbol symbol = n.Symbol;
+        Side side = n.Side;
+        OrdType ordType = n.OrdType;
+        OrderQty orderQty = n.OrderQty;
+        ClOrdID clOrdID = n.ClOrdID;
+        Price price = new Price(DEFAULT_MARKET_PRICE);
 
         switch (ordType.getValue())
         {
@@ -107,7 +106,7 @@ public class FixPaperBrokerage : IApplication
             default: throw new IncorrectTagValue(ordType.Tag);
         }
 
-        var exReport = new ExecutionReport(
+        ExecutionReport exReport = new ExecutionReport(
             new OrderID(GenOrderID()),
             new ExecID(GenExecID()),
             new ExecTransType(ExecTransType.NEW),
@@ -121,14 +120,11 @@ public class FixPaperBrokerage : IApplication
 
         exReport.Set(clOrdID);
         exReport.Set(orderQty);
+        exReport.Set(new LastShares(orderQty.getValue()));
         exReport.Set(new LastPx(price.getValue()));
 
         if (n.IsSetAccount())
             exReport.SetField(n.Account);
-
-        if (n.Header.IsSetField(Tags.OnBehalfOfCompID))
-            // set the comp Id in the response
-            exReport.Header.SetField(new DeliverToCompID(n.Header.GetString(Tags.OnBehalfOfCompID)));
 
         try
         {
@@ -138,6 +134,52 @@ public class FixPaperBrokerage : IApplication
         {
             Console.WriteLine("==session not found exception!==");
             Console.WriteLine(ex.ToString());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
+    }
+
+    public void OnMessage(OrderCancelReplaceRequest request, SessionID s)
+    {
+        string orderid = (request.IsSetOrderID()) ? request.OrderID.Obj : "unknown orderID";
+        var executionReport = new ExecutionReport
+        {
+            OrdStatus = new OrdStatus('5'),
+            OrderID = new OrderID(orderid),
+            ClOrdID = request.ClOrdID,
+            OrigClOrdID = request.OrigClOrdID,
+            ExecType = new ExecType('5'),
+            TransactTime = new TransactTime(DateTime.UtcNow)
+        };
+        
+        try
+        {
+            Session.SendToTarget(executionReport, s);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
+    }
+
+    public void OnMessage(OrderCancelRequest request, SessionID s)
+    {
+        string orderid = (request.IsSetOrderID()) ? request.OrderID.Obj : "unknown orderID";
+        var executionReport = new ExecutionReport
+        {
+            OrdStatus = new OrdStatus('4'),
+            OrderID = new OrderID(orderid),
+            ClOrdID = request.ClOrdID,
+            OrigClOrdID = request.OrigClOrdID,
+            ExecType = new ExecType('4'),
+            TransactTime = new TransactTime(DateTime.UtcNow)
+        };
+        
+        try
+        {
+            Session.SendToTarget(executionReport, s);
         }
         catch (Exception ex)
         {

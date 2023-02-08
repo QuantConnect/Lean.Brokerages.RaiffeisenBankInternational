@@ -483,7 +483,7 @@ namespace QuantConnect.RBI.Tests
         
         [Test]
         [TestCase("GOOCV", 210, 230)]
-        [Ignore("Not implemented")]
+        [Ignore("Requires configured RBIAcceptor or any acceptor")]
         public void PlaceOrderOnline(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -519,30 +519,82 @@ namespace QuantConnect.RBI.Tests
 
             brokerage.PlaceOrder(order);
 
-            // var firstReport = new ExecutionReport()
-            // {
-            //     OrdStatus = new OrdStatus('A'),
-            //     OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
-            //     ClOrdID = new ClOrdID("12345"),
-            //     ExecType = new ExecType('A'),
-            //     TransactTime = new TransactTime(DateTime.UtcNow),
-            // };
-            //
-            // brokerage.OnMessage(firstReport);
-            //
-            // var secondReport = new ExecutionReport
-            // {
-            //     OrdStatus = new OrdStatus('0'),
-            //     OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
-            //     ClOrdID = new ClOrdID("12345"),
-            //     ExecType = new ExecType('0'),
-            //     TransactTime = new TransactTime(DateTime.UtcNow)
-            // };
-            //
-            // brokerage.OnMessage(secondReport);
-
             Assert.IsTrue(submittedEvent.WaitOne(TimeSpan.FromSeconds(20)));
             Assert.IsTrue(pendingEvent.WaitOne(TimeSpan.FromSeconds(20)));
+        }
+        
+        [Test]
+        [TestCase("GOOCV", 210, 230)]
+        [Ignore("Requires configured RBIAcceptor or any acceptor")]
+        public void ModifyOrderOnline(string ticker, decimal quantity, decimal price)
+        {
+            using var brokerage =
+                CreateBrokerage();
+            var replacedEvent = new ManualResetEvent(false);
+        
+            brokerage.OrdersStatusChanged += (sender, e) =>
+            {
+        
+                if (e.Single().Status == OrderStatus.UpdateSubmitted)
+                {
+                    replacedEvent.Set();
+                }
+            };
+        
+            brokerage.Connect();
+            Assert.IsTrue(brokerage.IsConnected);
+        
+            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
+                DateTime.UtcNow, price);
+            
+            var properties = order.Properties as OrderProperties;
+        
+            properties.Exchange = Exchange.EDGA;
+        
+            _orderProvider.Add(order);
+        
+            brokerage.PlaceOrder(order);
+        
+            brokerage.UpdateOrder(order);
+
+            Assert.IsTrue(replacedEvent.WaitOne(TimeSpan.FromSeconds(20)));
+        }
+        
+        [Test]
+        [TestCase("GOOCV", 210, 230)]
+        [Ignore("Requires configured RBIAcceptor or any acceptor")]
+        public void CancelOrderOnline(string ticker, decimal quantity, decimal price)
+        {
+            using var brokerage =
+                CreateBrokerage();
+            var canceledEvent = new ManualResetEvent(false);
+        
+            brokerage.OrdersStatusChanged += (sender, e) =>
+            { 
+                if (e.Single().Status == OrderStatus.Canceled)
+                {
+                    canceledEvent.Set();
+                }
+            };
+        
+            brokerage.Connect();
+
+            Assert.IsTrue(brokerage.IsConnected);
+        
+            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
+                DateTime.UtcNow, price);
+            
+            var properties = order.Properties as OrderProperties;
+        
+            properties.Exchange = Exchange.EDGA;
+        
+            _orderProvider.Add(order);
+        
+            brokerage.PlaceOrder(order);
+        
+            brokerage.CancelOrder(order);
+
+            Assert.IsTrue(canceledEvent.WaitOne(TimeSpan.FromSeconds(20)));
         }
 
         private RBIBrokerage CreateBrokerage()
