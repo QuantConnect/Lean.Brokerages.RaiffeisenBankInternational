@@ -2,8 +2,8 @@
   "data-folder": "../../../../Lean/Data/",
   "data-directory": "../../../../Lean/Data/",
   
-  "rbi-host": "127.0.0.1",
-  "rbi-port": "5080",
-  "rbi-sender-comp-id": "CLIENT1",
-  "rbi-target-comp-id": "EXECUTOR"
+  "rbi-host": "",
+  "rbi-port": "",
+  "rbi-sender-comp-id": "",
+  "rbi-target-comp-id": ""
 }
