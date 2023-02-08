@@ -18,13 +18,14 @@ public class FixSymbolController : IFixSymbolController
 {
     private readonly IRBIFixConnection _session;
     private readonly RBISymbolMapper _symbolMapper;
+    private readonly IFixBrokerageController _brokerageController;
 
-    public FixSymbolController(IRBIFixConnection session)
+    public FixSymbolController(IRBIFixConnection session, IFixBrokerageController brokerageController)
     {
         _session = session;
         _symbolMapper = new RBISymbolMapper();
-        
-        
+        _brokerageController = brokerageController;
+        _brokerageController.Register(this);
     }
 
     public bool PlaceOrder(Order order)
