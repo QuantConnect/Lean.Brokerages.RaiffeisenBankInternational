@@ -34,7 +34,7 @@ using QuickFix.FIX42;
 namespace QuantConnect.RBI.Tests
 {
     [TestFixture]
-    public partial class RBIBrokerageTests
+    public class RBIBrokerageTests
     {
         private readonly FixConfiguration _fixConfiguration = new()
         {
@@ -105,14 +105,14 @@ namespace QuantConnect.RBI.Tests
             var submittedEvent = new ManualResetEvent(false);
             var pendingEvent = new ManualResetEvent(false);
                 
-            brokerage.OrdersStatusChanged += (sender, e) =>
+            brokerage.OrderStatusChanged += (sender, e) =>
             {
-                if (e.Single().Status == OrderStatus.Submitted)
+                if (e.Status == OrderStatus.Submitted)
                 {
                     submittedEvent.Set();
                 }
         
-                if (e.Single().Status == OrderStatus.New)
+                if (e.Status == OrderStatus.New)
                 {
                     pendingEvent.Set();
                 }
@@ -152,9 +152,11 @@ namespace QuantConnect.RBI.Tests
             };
         
             brokerage.OnMessage(secondReport);
-        
+
             Assert.IsTrue(submittedEvent.WaitOne(TimeSpan.FromSeconds(20)));
             Assert.IsTrue(pendingEvent.WaitOne(TimeSpan.FromSeconds(20)));
+            
+            brokerage.Disconnect();
         }
         
         [Test]
@@ -168,24 +170,24 @@ namespace QuantConnect.RBI.Tests
             var filledEvent = new ManualResetEvent(false);
             var pendingEvent = new ManualResetEvent(false);
         
-            brokerage.OrdersStatusChanged += (sender, e) =>
+            brokerage.OrderStatusChanged += (sender, e) =>
             {
-                if (e.Single().Status == OrderStatus.Submitted)
+                if (e.Status == OrderStatus.Submitted)
                 {
                     submittedEvent.Set();
                 }
         
-                else if (e.Single().Status == OrderStatus.New)
+                else if (e.Status == OrderStatus.New)
                 {
                     pendingEvent.Set();
                 }
                 
-                else if (e.Single().Status == OrderStatus.PartiallyFilled)
+                else if (e.Status == OrderStatus.PartiallyFilled)
                 {
                     partialFilledEvent.Set();
                 }
         
-                else if (e.Single().Status == OrderStatus.Filled)
+                else if (e.Status == OrderStatus.Filled)
                 {
                     filledEvent.Set();
                 }
@@ -258,6 +260,8 @@ namespace QuantConnect.RBI.Tests
             Assert.IsTrue(pendingEvent.WaitOne(TimeSpan.FromSeconds(10)));
             Assert.IsTrue(partialFilledEvent.WaitOne(TimeSpan.FromSeconds(10)));
             Assert.IsTrue(filledEvent.WaitOne(TimeSpan.FromSeconds(10)));
+            
+            brokerage.Disconnect();
         }
         
         [Test]
@@ -269,14 +273,14 @@ namespace QuantConnect.RBI.Tests
             var rejectedEvent = new ManualResetEvent(false);
             var pendingEvent = new ManualResetEvent(false);
         
-            brokerage.OrdersStatusChanged += (sender, e) =>
+            brokerage.OrderStatusChanged += (sender, e) =>
             {
-                if (e.Single().Status == OrderStatus.Invalid)
+                if (e.Status == OrderStatus.Invalid)
                 {
                     rejectedEvent.Set();
                 }
         
-                if (e.Single().Status == OrderStatus.New)
+                if (e.Status == OrderStatus.New)
                 {
                     pendingEvent.Set();
                 }
@@ -320,6 +324,8 @@ namespace QuantConnect.RBI.Tests
         
             Assert.IsTrue(pendingEvent.WaitOne(TimeSpan.FromSeconds(20)));
             Assert.IsTrue(rejectedEvent.WaitOne(TimeSpan.FromSeconds(20)));
+            
+            brokerage.Disconnect();
         }
         
         [Test]
@@ -330,10 +336,10 @@ namespace QuantConnect.RBI.Tests
                 CreateBrokerage();
             var replacedEvent = new ManualResetEvent(false);
         
-            brokerage.OrdersStatusChanged += (sender, e) =>
+            brokerage.OrderStatusChanged += (sender, e) =>
             {
         
-                if (e.Single().Status == OrderStatus.UpdateSubmitted)
+                if (e.Status == OrderStatus.UpdateSubmitted)
                 {
                     replacedEvent.Set();
                 }
@@ -366,11 +372,13 @@ namespace QuantConnect.RBI.Tests
             brokerage.OnMessage(rejectedReport);
             
             Assert.IsTrue(replacedEvent.WaitOne(TimeSpan.FromSeconds(20)));
+            
+            brokerage.Disconnect();
         }
         
         [Test]
         [TestCase("GOOCV", 210, 230)]
-        [Ignore("")]
+        // [Ignore("")]
         public void ModifyOrderReject(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -399,20 +407,22 @@ namespace QuantConnect.RBI.Tests
             };
         
             brokerage.OnMessage(rejection);
+            
+            brokerage.Disconnect();
         }
         
         [Test]
         [TestCase("GOOCV", 210, 230)]
-        [Ignore("")]
+        // [Ignore("")]
         public void CancelOrder(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
                 CreateBrokerage();
             var canceledEvent = new ManualResetEvent(false);
         
-            brokerage.OrdersStatusChanged += (sender, e) =>
+            brokerage.OrderStatusChanged += (sender, e) =>
             { 
-                if (e.Single().Status == OrderStatus.Canceled)
+                if (e.Status == OrderStatus.Canceled)
                 {
                     canceledEvent.Set();
                 }
@@ -446,11 +456,13 @@ namespace QuantConnect.RBI.Tests
             brokerage.OnMessage(rejectedReport);
             
             Assert.IsTrue(canceledEvent.WaitOne(TimeSpan.FromSeconds(20)));
+            
+            brokerage.Disconnect();
         }
         
         [Test]
         [TestCase("GOOCV", 210, 230)]
-        [Ignore("")]
+        // [Ignore("")]
         public void CancelOrderReject(string ticker, decimal quantity, decimal price)
         {
             using var brokerage =
@@ -479,6 +491,8 @@ namespace QuantConnect.RBI.Tests
             };
         
             brokerage.OnMessage(rejection);
+            
+            brokerage.Disconnect();
         }
         
         [Test]
@@ -491,34 +505,34 @@ namespace QuantConnect.RBI.Tests
             var submittedEvent = new ManualResetEvent(false);
             var pendingEvent = new ManualResetEvent(false);
                 
-            brokerage.OrdersStatusChanged += (sender, e) =>
+            brokerage.OrderStatusChanged += (sender, e) =>
             {
-                if (e.Single().Status == OrderStatus.Submitted)
+                if (e.Status == OrderStatus.Submitted)
                 {
                     submittedEvent.Set();
                 }
-
-                if (e.Single().Status == OrderStatus.New)
+        
+                if (e.Status == OrderStatus.New)
                 {
                     pendingEvent.Set();
                 }
             };
             
             brokerage.Connect();
-
+        
             Assert.IsTrue(brokerage.IsConnected);
-
+        
             var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
                 DateTime.UtcNow, price);
-
+        
             var properties = order.Properties as OrderProperties;
-
+        
             properties.Exchange = Exchange.EDGA;
-
+        
             _orderProvider.Add(order);
-
+        
             brokerage.PlaceOrder(order);
-
+        
             Assert.IsTrue(submittedEvent.WaitOne(TimeSpan.FromSeconds(20)));
             Assert.IsTrue(pendingEvent.WaitOne(TimeSpan.FromSeconds(20)));
         }
@@ -532,10 +546,10 @@ namespace QuantConnect.RBI.Tests
                 CreateBrokerage();
             var replacedEvent = new ManualResetEvent(false);
         
-            brokerage.OrdersStatusChanged += (sender, e) =>
+            brokerage.OrderStatusChanged += (sender, e) =>
             {
         
-                if (e.Single().Status == OrderStatus.UpdateSubmitted)
+                if (e.Status == OrderStatus.UpdateSubmitted)
                 {
                     replacedEvent.Set();
                 }
@@ -556,7 +570,7 @@ namespace QuantConnect.RBI.Tests
             brokerage.PlaceOrder(order);
         
             brokerage.UpdateOrder(order);
-
+        
             Assert.IsTrue(replacedEvent.WaitOne(TimeSpan.FromSeconds(20)));
         }
         
@@ -569,16 +583,16 @@ namespace QuantConnect.RBI.Tests
                 CreateBrokerage();
             var canceledEvent = new ManualResetEvent(false);
         
-            brokerage.OrdersStatusChanged += (sender, e) =>
+            brokerage.OrderStatusChanged += (sender, e) =>
             { 
-                if (e.Single().Status == OrderStatus.Canceled)
+                if (e.Status == OrderStatus.Canceled)
                 {
                     canceledEvent.Set();
                 }
             };
         
             brokerage.Connect();
-
+        
             Assert.IsTrue(brokerage.IsConnected);
         
             var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
@@ -593,7 +607,7 @@ namespace QuantConnect.RBI.Tests
             brokerage.PlaceOrder(order);
         
             brokerage.CancelOrder(order);
-
+        
             Assert.IsTrue(canceledEvent.WaitOne(TimeSpan.FromSeconds(20)));
         }
 
