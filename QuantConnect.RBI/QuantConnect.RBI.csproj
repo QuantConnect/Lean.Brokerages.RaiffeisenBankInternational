@@ -32,4 +32,7 @@
     <PackageReference Include="QuickFIXn.Core" Version="1.10.0" />
     <PackageReference Include="QuickFIXn.FIX4.2" Version="1.10.0" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Lean\Brokerages\QuantConnect.Brokerages.csproj" />
+  </ItemGroup>
 </Project>
