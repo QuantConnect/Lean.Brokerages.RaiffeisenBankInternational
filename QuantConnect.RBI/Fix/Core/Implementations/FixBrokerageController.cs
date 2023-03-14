@@ -1,6 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿/*
+ * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
+ * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+using System.Collections.Concurrent;
 using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Core.Interfaces;
 using QuantConnect.RBI.Fix.Utils;
@@ -11,7 +24,7 @@ namespace QuantConnect.RBI.Fix.Core.Implementations;
 
 public class FixBrokerageController : IFixBrokerageController
 {
-    private readonly Dictionary<string, ExecutionReport> _executions = new();
+    private readonly ConcurrentDictionary<string, ExecutionReport> _executions = new();
     private IFixSymbolController _symbolController;
 
     private readonly RBISymbolMapper _symbolMapper;
@@ -54,7 +67,7 @@ public class FixBrokerageController : IFixBrokerageController
     {
         if (_symbolController == null)
         {
-            throw new ArgumentNullException($"Handler has not been registered");
+            return false;
         }
         
         return _symbolController.PlaceOrder(order);
@@ -64,7 +77,7 @@ public class FixBrokerageController : IFixBrokerageController
     {
         if (_symbolController == null)
         {
-            throw new ArgumentNullException($"Handler has not been registered");
+            return false;
         }
         
         return _symbolController.CancelOrder(order);
@@ -74,7 +87,7 @@ public class FixBrokerageController : IFixBrokerageController
     {
         if (_symbolController == null)
         {
-            throw new ArgumentNullException($"Handler has not been registered");
+            return false;
         }
 
         return _symbolController.UpdateOrder(order);
@@ -96,7 +109,7 @@ public class FixBrokerageController : IFixBrokerageController
         }
         else
         {
-            _executions.Remove(orderId);
+            _executions.Remove(orderId, out _);
         }
 
         ExecutionReport?.Invoke(this, execution);
@@ -107,7 +120,7 @@ public class FixBrokerageController : IFixBrokerageController
         var ticker = report.Symbol.getValue();
         var securityType = _symbolMapper.GetLeanSecurityType(report.SecurityType.getValue());
 
-        var symbol = Symbol.Create(ticker, securityType, Market.USA);
+        var symbol = _symbolMapper.GetLeanSymbol(ticker, securityType, Market.USA);
 
         var orderQty = report.OrderQty.getValue();
         var orderSide = report.Side.getValue();

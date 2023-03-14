@@ -1,12 +1,25 @@
-﻿using System;
+﻿/*
+ * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
+ * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
-using QLNet;
 using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Connection.Implementations;
-using QuantConnect.RBI.Fix.Connection.Interfaces;
 using QuantConnect.RBI.Fix.Core.Interfaces;
 using QuantConnect.RBI.Fix.Utils;
+using QuantConnect.Securities;
 using QuantConnect.Util;
 using QuickFix;
 using QuickFix.Fields;
@@ -20,13 +33,20 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
 {
     private readonly FixConfiguration _config;
     private readonly IFixBrokerageController _brokerageController;
-    private IFixSymbolController _fixSymbolController;
+    private readonly ISecurityProvider _securityProvider;
+    private readonly RBISymbolMapper _symbolMapper;
     private ConcurrentDictionary<SessionID, IFixSymbolController> _sessionHandlers = new();
 
     private int _expectedMsgSeqNumLogOn;
 
-    public FixMessageHandler(FixConfiguration config, IFixBrokerageController brokerageController)
+    public FixMessageHandler(
+        FixConfiguration config,
+        IFixBrokerageController brokerageController,
+        ISecurityProvider securityProvider,
+        RBISymbolMapper symbolMapper)
     {
+        _symbolMapper = symbolMapper;
+        _securityProvider = securityProvider;
         _config = config;
         _brokerageController = brokerageController;
     }
@@ -65,51 +85,40 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
 
     public void EnrichMessage(Message message)
     {
-        switch (message)
+        if (message.IsSetField(MsgType.TAG))
         {
-            case Logon logon:
-                logon.SetField(new ResetSeqNumFlag(ResetSeqNumFlag.NO));
-                logon.SetField(new EncryptMethod(EncryptMethod.NONE));
-                if (_expectedMsgSeqNumLogOn > 0)
+            var msgType = message.GetString(MsgType.TAG);
+
+            if (!msgType.Equals(MsgType.REJECT) && !msgType.Equals(MsgType.BUSINESS_MESSAGE_REJECT))
+            {
+                switch (message)
                 {
-                    logon.SetField(new MsgSeqNum(_expectedMsgSeqNumLogOn));
+                    case Logon logon:
+                        logon.SetField(new ResetSeqNumFlag(ResetSeqNumFlag.NO));
+                        logon.SetField(new EncryptMethod(EncryptMethod.NONE));
+                        break;
                 }
-                break;
-            
-            case SequenceReset reset:
-                reset.SetField(new ResetSeqNumFlag(ResetSeqNumFlag.YES));
-                break;
-            
+            }
         }
     }
 
     public void OnLogon(SessionID sessionId)
     {
         Log.Trace($"OnLogon(): Adding handler for SessionId {sessionId}");
-
-        if (sessionId.SenderCompID == _config.SenderCompId && sessionId.TargetCompID == _config.TargetCompId)
+        var session = new RBIFixConnection(sessionId);
+        _sessionHandlers[sessionId] =
+            new FixSymbolController(session, _brokerageController, _securityProvider, _symbolMapper);
+        if (_expectedMsgSeqNumLogOn > 0)
         {
-            var session = new RBIFixConnection(sessionId);
-            _sessionHandlers[sessionId] = new FixSymbolController(session, _brokerageController);
-            if (_expectedMsgSeqNumLogOn > 0)
-            {
-                _expectedMsgSeqNumLogOn = 0;
-            }
-        }
-        else
-        {
-            Log.Trace("OnLogon(): SenderCompId or TargetCompId is invalid ");
+            Session.LookupSession(sessionId).NextSenderMsgSeqNum = _expectedMsgSeqNumLogOn;
+            _expectedMsgSeqNumLogOn = 0;
         }
     }
 
     public void OnLogout(SessionID sessionId)
     {
-        if (sessionId.SenderCompID == _config.SenderCompId && sessionId.TargetCompID == _config.TargetCompId)
+        if (_sessionHandlers.TryRemove(sessionId, out var handler))
         {
-            if (!_sessionHandlers.TryGetValue(sessionId, out var handler))
-            {
-                return;
-            }
             _brokerageController.Unregister(handler);
         }
     }

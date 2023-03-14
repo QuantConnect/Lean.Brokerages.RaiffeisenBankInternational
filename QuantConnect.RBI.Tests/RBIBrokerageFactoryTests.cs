@@ -20,7 +20,7 @@ using QuantConnect.Util;
 namespace QuantConnect.RBI.Tests
 {
     [TestFixture]
-    public class TemplateBrokerageFactoryTests
+    public class RBIBrokerageFactoryTests
     {
         [Test]
         public void InitializesFactoryFromComposer()

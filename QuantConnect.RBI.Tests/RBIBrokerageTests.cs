@@ -24,7 +24,6 @@ using QuantConnect.Tests;
 using QuantConnect.Orders;
 using QuantConnect.Packets;
 using QuantConnect.RBI.Fix;
-using QuantConnect.RBI.Fix.Core;
 using QuantConnect.RBI.Fix.Core.Implementations;
 using QuantConnect.Tests.Brokerages;
 using QuickFix;
@@ -46,55 +45,6 @@ namespace QuantConnect.RBI.Tests
         private readonly QCAlgorithm _algorithm = new ();
         private readonly LiveNodePacket _job = new ();
         private readonly OrderProvider _orderProvider = new (new List<Order>());
-
-
-        /// <summary>
-        /// Provides the data required to test each order type in various cases
-        /// </summary>
-        private static TestCaseData[] OrderParameters()
-        {
-            return new[]
-            {
-                new TestCaseData(new MarketOrderTestParameters(Symbols.BTCUSD)).SetName("MarketOrder"),
-                new TestCaseData(new LimitOrderTestParameters(Symbols.BTCUSD, 10000m, 0.01m)).SetName("LimitOrder"),
-                new TestCaseData(new StopMarketOrderTestParameters(Symbols.BTCUSD, 10000m, 0.01m)).SetName("StopMarketOrder"),
-                new TestCaseData(new StopLimitOrderTestParameters(Symbols.BTCUSD, 10000m, 0.01m)).SetName("StopLimitOrder"),
-                new TestCaseData(new LimitIfTouchedOrderTestParameters(Symbols.BTCUSD, 10000m, 0.01m)).SetName("LimitIfTouchedOrder")
-            };
-        }
-        
-        [Test]
-        [TestCase("AAPL",5, 500)]
-        [TestCase("DLF", 10, 10000)]
-        [TestCase("GOOCV", 2, 230)]
-        [Ignore("Manual test for receiving fix protocol properly")]
-        public void PlaceOrder(string ticker, decimal quantity, decimal price)
-        {
-            var symbolMapper = new RBISymbolMapper();
-            var controller = new FixBrokerageController(symbolMapper);
-            var messageHandler = new FixMessageHandler(_fixConfiguration, controller);
-
-            using var fixInstance = new FixInstance(messageHandler, _fixConfiguration);
-
-            fixInstance.Initialize();
-
-
-            var sessionId = new SessionID(_fixConfiguration.FixVersionString, _fixConfiguration.SenderCompId,
-                _fixConfiguration.TargetCompId);
-
-            fixInstance.OnLogon(sessionId);
-
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
-                DateTime.UtcNow, price);
-            var actual = controller.PlaceOrder(order);
-
-
-            var actualString = actual.ToString().Remove(10, 6);
-
-            var msgSeqNum = actualString.Substring(18, 2);
-
-            actualString = actualString.Remove(31, 25);
-        }
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
@@ -613,7 +563,8 @@ namespace QuantConnect.RBI.Tests
 
         private RBIBrokerage CreateBrokerage()
         {
-            return new RBIBrokerage(_fixConfiguration, _orderProvider, _algorithm, _job);
+            return new RBIBrokerage(_fixConfiguration, _orderProvider, _algorithm, _job, TestGlobals.MapFileProvider,
+                new SecurityProvider());
         }
     }
 }

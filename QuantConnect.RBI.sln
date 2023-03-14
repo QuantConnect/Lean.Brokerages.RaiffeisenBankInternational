@@ -17,8 +17,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuantConnect.Tests", "..\Le
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuantConnect.RBI.Tests", "QuantConnect.RBI.Tests\QuantConnect.RBI.Tests.csproj", "{8793CDDF-3348-473F-98AF-68C6EBFA5014}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuantConnect.RBI.ToolBox", "QuantConnect.RBI.ToolBox\QuantConnect.RBI.ToolBox.csproj", "{1AB073F2-6881-48C3-AC07-A042D0B51E6B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuantConnect.ToolBox", "..\Lean\ToolBox\QuantConnect.ToolBox.csproj", "{88885A3A-5028-4EFB-9244-47FDB04725CE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RBIAcceptor", "RBIAcceptor\RBIAcceptor.csproj", "{FE13B84E-D5DA-47F1-B57D-AE1BC02BEFFA}"
@@ -57,10 +55,6 @@ Global
 		{8793CDDF-3348-473F-98AF-68C6EBFA5014}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8793CDDF-3348-473F-98AF-68C6EBFA5014}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8793CDDF-3348-473F-98AF-68C6EBFA5014}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1AB073F2-6881-48C3-AC07-A042D0B51E6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1AB073F2-6881-48C3-AC07-A042D0B51E6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1AB073F2-6881-48C3-AC07-A042D0B51E6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1AB073F2-6881-48C3-AC07-A042D0B51E6B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{88885A3A-5028-4EFB-9244-47FDB04725CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{88885A3A-5028-4EFB-9244-47FDB04725CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{88885A3A-5028-4EFB-9244-47FDB04725CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
