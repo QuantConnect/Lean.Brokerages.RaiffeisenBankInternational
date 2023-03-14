@@ -14,13 +14,12 @@
 */
 
 using NUnit.Framework;
-using QuantConnect.RBI.Fix.Core;
 using QuantConnect.Tests;
 
 namespace QuantConnect.RBI.Tests
 {
     [TestFixture]
-    public class TemplateBrokerageSymbolMapperTests
+    public class RBIBrokerageSymbolMapperTests
     {
         [TestCase("NVAX", SecurityType.Equity, "NVAX")]
         [TestCase("GOOCV", SecurityType.Option, "GOOCV")]
@@ -28,7 +27,7 @@ namespace QuantConnect.RBI.Tests
         {
             var leanSymbol = Symbol.Create(symbolValue, symbolSecurityType, Market.USA);
 
-            var symbolMapper = new RBISymbolMapper();
+            var symbolMapper = new RBISymbolMapper(TestGlobals.MapFileProvider);
 
             var symbolBrokerage = symbolMapper.GetBrokerageSymbol(leanSymbol);
 

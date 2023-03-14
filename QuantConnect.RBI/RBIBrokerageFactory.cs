@@ -13,15 +13,14 @@
  * limitations under the License.
 */
 
-using System;
 using QuantConnect.Packets;
 using QuantConnect.Brokerages;
 using QuantConnect.Interfaces;
 using QuantConnect.Securities;
-using System.Collections.Generic;
 using QuantConnect.Configuration;
 using QuantConnect.Logging;
 using QuantConnect.RBI.Fix;
+using QuantConnect.Util;
 
 namespace QuantConnect.RBI
 {
@@ -41,8 +40,11 @@ namespace QuantConnect.RBI
         {
             { "rbi-host", Config.Get("rbi-host") },
             { "rbi-port", Config.Get("rbi-port") },
-            {"rbi-sender-comp-id", Config.Get("rbi-sender-comp-id") },
-            {"rbi-target-comp-id", Config.Get("rbi-target-comp-id") }
+            { "rbi-sender-comp-id", Config.Get("rbi-sender-comp-id") },
+            { "rbi-target-comp-id", Config.Get("rbi-target-comp-id") },
+
+            { "live-cash-balance", Config.Get("live-cash-balance")},
+            { "live-holdings", Config.Get("live-holdings")},
         };
 
         /// <summary>
@@ -88,8 +90,16 @@ namespace QuantConnect.RBI
                 throw new Exception(string.Join(Environment.NewLine, errors));
             }
 
-            var brokerage = new RBIBrokerage(fixConfig, algorithm.Transactions, algorithm, job);
-
+            var brokerage = new RBIBrokerage(
+                fixConfig,
+                algorithm.Transactions,
+                algorithm,
+                job,
+                Composer.Instance.GetExportedValueByTypeName<IMapFileProvider>(Config.Get("map-file-provider",
+                    "QuantConnect.Data.Auxiliary.LocalDiskMapFileProvider")),
+                algorithm.Portfolio
+            );
+            
             return brokerage;
         }
 
