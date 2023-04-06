@@ -175,7 +175,7 @@ namespace QuantConnect.RBI
 
             var transactTime = report.TransactTime.getValue();
 
-            var order = _orderProvider.GetOrderByBrokerageId(ordId);
+            var order = _orderProvider.GetOrdersByBrokerageId(ordId).SingleOrDefault();
 
             if (order == null)
             {
