@@ -21,9 +21,15 @@ namespace QuantConnect.RBI.Fix.LogFactory;
 public class LogFactory : ILogFactory
 {
     private static readonly ConcurrentDictionary<SessionID, ILog> Loggers = new();
+    private readonly bool _logFixMessages;
+
+    public LogFactory(bool logFixMesssages)
+    {
+        _logFixMessages = logFixMesssages;
+    }
     
     public ILog Create(SessionID sessionID)
     {
-        return Loggers.GetOrAdd(sessionID, new Logger());
+        return Loggers.GetOrAdd(sessionID, new Logger(_logFixMessages));
     }
 }

@@ -22,6 +22,13 @@ namespace QuantConnect.RBI.Fix.LogFactory;
 public class Logger : ILog
 {
     private bool _isDisposed;
+    private readonly bool _logFixMessages;
+
+    public Logger(bool logFixMesssages)
+    {
+        _logFixMessages = logFixMesssages;
+    }
+
     public void Dispose()
     {
         if (_isDisposed)
@@ -38,7 +45,7 @@ public class Logger : ILog
 
     public void OnIncoming(string msg)
     {
-        if (CheckMessage(msg))
+        if (_logFixMessages && CheckMessage(msg))
         {
             Log.Trace($"Incoming: {msg.Replace('\x1', '|')}", true);
         }
@@ -46,7 +53,7 @@ public class Logger : ILog
 
     public void OnOutgoing(string msg)
     {
-        if (CheckMessage(msg))
+        if (_logFixMessages && CheckMessage(msg))
         {
             Log.Trace($"Outcoming: {msg.Replace('\x1', '|')}", true);
         }
@@ -54,7 +61,9 @@ public class Logger : ILog
 
     public void OnEvent(string s)
     {
-        Log.Trace($"[event] {s.Replace('\x1', '|')}", true);
+        if(_logFixMessages) {
+            Log.Trace($"[event] {s.Replace('\x1', '|')}", true);
+        }
     }
 
     private bool CheckMessage(string msg)

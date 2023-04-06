@@ -35,13 +35,13 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 
     private bool _isDisposed;
 
-    public FixInstance(IFixMessageHandler messageHandler, FixConfiguration config)
+    public FixInstance(IFixMessageHandler messageHandler, FixConfiguration config, bool logFixMesssages)
     {
         _messageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
         _config = config;
         _securityExchangeHours =
             MarketHoursDatabase.FromDataFolder().GetExchangeHours(Market.USA, null, SecurityType.Equity);
-        _logFactory = new LogFactory.LogFactory();
+        _logFactory = new LogFactory.LogFactory(logFixMesssages);
     }
     
     public bool IsConnected()
