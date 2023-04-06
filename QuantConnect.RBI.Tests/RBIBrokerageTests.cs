@@ -55,14 +55,14 @@ namespace QuantConnect.RBI.Tests
             var submittedEvent = new ManualResetEvent(false);
             var pendingEvent = new ManualResetEvent(false);
                 
-            brokerage.OrderStatusChanged += (sender, e) =>
+            brokerage.OrdersStatusChanged += (sender, e) =>
             {
-                if (e.Status == OrderStatus.Submitted)
+                if (e.Single().Status == OrderStatus.Submitted)
                 {
                     submittedEvent.Set();
                 }
         
-                if (e.Status == OrderStatus.New)
+                if (e.Single().Status == OrderStatus.New)
                 {
                     pendingEvent.Set();
                 }
@@ -120,24 +120,24 @@ namespace QuantConnect.RBI.Tests
             var filledEvent = new ManualResetEvent(false);
             var pendingEvent = new ManualResetEvent(false);
         
-            brokerage.OrderStatusChanged += (sender, e) =>
+            brokerage.OrdersStatusChanged += (sender, e) =>
             {
-                if (e.Status == OrderStatus.Submitted)
+                if (e.Single().Status == OrderStatus.Submitted)
                 {
                     submittedEvent.Set();
                 }
         
-                else if (e.Status == OrderStatus.New)
+                else if (e.Single().Status == OrderStatus.New)
                 {
                     pendingEvent.Set();
                 }
                 
-                else if (e.Status == OrderStatus.PartiallyFilled)
+                else if (e.Single().Status == OrderStatus.PartiallyFilled)
                 {
                     partialFilledEvent.Set();
                 }
         
-                else if (e.Status == OrderStatus.Filled)
+                else if (e.Single().Status == OrderStatus.Filled)
                 {
                     filledEvent.Set();
                 }
@@ -223,14 +223,14 @@ namespace QuantConnect.RBI.Tests
             var rejectedEvent = new ManualResetEvent(false);
             var pendingEvent = new ManualResetEvent(false);
         
-            brokerage.OrderStatusChanged += (sender, e) =>
+            brokerage.OrdersStatusChanged += (sender, e) =>
             {
-                if (e.Status == OrderStatus.Invalid)
+                if (e.Single().Status == OrderStatus.Invalid)
                 {
                     rejectedEvent.Set();
                 }
         
-                if (e.Status == OrderStatus.New)
+                if (e.Single().Status == OrderStatus.New)
                 {
                     pendingEvent.Set();
                 }
@@ -286,10 +286,10 @@ namespace QuantConnect.RBI.Tests
                 CreateBrokerage();
             var replacedEvent = new ManualResetEvent(false);
         
-            brokerage.OrderStatusChanged += (sender, e) =>
+            brokerage.OrdersStatusChanged += (sender, e) =>
             {
         
-                if (e.Status == OrderStatus.UpdateSubmitted)
+                if (e.Single().Status == OrderStatus.UpdateSubmitted)
                 {
                     replacedEvent.Set();
                 }
@@ -370,9 +370,9 @@ namespace QuantConnect.RBI.Tests
                 CreateBrokerage();
             var canceledEvent = new ManualResetEvent(false);
         
-            brokerage.OrderStatusChanged += (sender, e) =>
+            brokerage.OrdersStatusChanged += (sender, e) =>
             { 
-                if (e.Status == OrderStatus.Canceled)
+                if (e.Single().Status == OrderStatus.Canceled)
                 {
                     canceledEvent.Set();
                 }
@@ -455,14 +455,14 @@ namespace QuantConnect.RBI.Tests
             var submittedEvent = new ManualResetEvent(false);
             var pendingEvent = new ManualResetEvent(false);
                 
-            brokerage.OrderStatusChanged += (sender, e) =>
+            brokerage.OrdersStatusChanged += (sender, e) =>
             {
-                if (e.Status == OrderStatus.Submitted)
+                if (e.Single().Status == OrderStatus.Submitted)
                 {
                     submittedEvent.Set();
                 }
         
-                if (e.Status == OrderStatus.New)
+                if (e.Single().Status == OrderStatus.New)
                 {
                     pendingEvent.Set();
                 }
@@ -496,10 +496,10 @@ namespace QuantConnect.RBI.Tests
                 CreateBrokerage();
             var replacedEvent = new ManualResetEvent(false);
         
-            brokerage.OrderStatusChanged += (sender, e) =>
+            brokerage.OrdersStatusChanged += (sender, e) =>
             {
         
-                if (e.Status == OrderStatus.UpdateSubmitted)
+                if (e.Single().Status == OrderStatus.UpdateSubmitted)
                 {
                     replacedEvent.Set();
                 }
@@ -533,9 +533,9 @@ namespace QuantConnect.RBI.Tests
                 CreateBrokerage();
             var canceledEvent = new ManualResetEvent(false);
         
-            brokerage.OrderStatusChanged += (sender, e) =>
+            brokerage.OrdersStatusChanged += (sender, e) =>
             { 
-                if (e.Status == OrderStatus.Canceled)
+                if (e.Single().Status == OrderStatus.Canceled)
                 {
                     canceledEvent.Set();
                 }
