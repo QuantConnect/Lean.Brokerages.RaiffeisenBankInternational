@@ -160,7 +160,7 @@ namespace QuantConnect.RBI.Tests
             {
                 OrdStatus = new OrdStatus('A'),
                 OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("12345"),
+                ClOrdID = new ClOrdID("123456"),
                 ExecType = new ExecType('A'),
                 TransactTime = new TransactTime(DateTime.UtcNow)
             };
@@ -171,7 +171,7 @@ namespace QuantConnect.RBI.Tests
             {
                 OrdStatus = new OrdStatus('0'),
                 OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("12345"),
+                ClOrdID = new ClOrdID("123456"),
                 ExecType = new ExecType('0'),
                 TransactTime = new TransactTime(DateTime.UtcNow)
             };
@@ -182,7 +182,7 @@ namespace QuantConnect.RBI.Tests
             {
                 OrdStatus = new OrdStatus('1'),
                 OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("12345"),
+                ClOrdID = new ClOrdID("123456"),
                 ExecType = new ExecType('1'),
                 TransactTime = new TransactTime(DateTime.UtcNow),
                 LastShares = new LastShares(200),
@@ -196,7 +196,7 @@ namespace QuantConnect.RBI.Tests
             {
                 OrdStatus = new OrdStatus('2'),
                 OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("12345"),
+                ClOrdID = new ClOrdID("123456"),
                 ExecType = new ExecType('2'),
                 TransactTime = new TransactTime(DateTime.UtcNow),
                 LastShares = new LastShares(20),
@@ -253,7 +253,7 @@ namespace QuantConnect.RBI.Tests
             {
                 OrdStatus = new OrdStatus('A'),
                 OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("12345"),
+                ClOrdID = new ClOrdID("123456"),
                 ExecType = new ExecType('A'),
                 TransactTime = new TransactTime(DateTime.UtcNow),
             };
@@ -264,7 +264,7 @@ namespace QuantConnect.RBI.Tests
             {
                 OrdStatus = new OrdStatus('8'),
                 OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("12345"),
+                ClOrdID = new ClOrdID("123456"),
                 ExecType = new ExecType('8'),
                 TransactTime = new TransactTime(DateTime.UtcNow),
                 Text = new Text("Dynamic  limits:  limit  would  be  breached,  Order price(273) is below minimum allowed soft price (700.5)")
@@ -301,9 +301,10 @@ namespace QuantConnect.RBI.Tests
                 DateTime.UtcNow, price);
             
             var properties = order.Properties as OrderProperties;
+            
         
             properties.Exchange = Exchange.EDGA;
-        
+
             _orderProvider.Add(order);
         
             brokerage.PlaceOrder(order);
@@ -398,7 +399,7 @@ namespace QuantConnect.RBI.Tests
                 OrdStatus = new OrdStatus('4'),
                 OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
                 ClOrdID = new ClOrdID("123456"),
-                OrigClOrdID = new OrigClOrdID("12345"),
+                OrigClOrdID = new OrigClOrdID("123456"),
                 ExecType = new ExecType('4'),
                 TransactTime = new TransactTime(DateTime.UtcNow)
             };
