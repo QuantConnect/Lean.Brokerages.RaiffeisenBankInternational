@@ -55,7 +55,8 @@ namespace QuantConnect.RBI
             IAlgorithm algorithm,
             LiveNodePacket job,
             IMapFileProvider mapFileProvider,
-            ISecurityProvider securityProvider) : base("RBI")
+            ISecurityProvider securityProvider,
+            bool logFixMessages) : base("RBI")
         {
             _algorithm = algorithm;
             _job = job;
@@ -68,7 +69,7 @@ namespace QuantConnect.RBI
             _fixBrokerageController.ExecutionReport += OnExecutionReport;
             
             var fixProtocolDirector = new FixMessageHandler(config, _fixBrokerageController, securityProvider, symbolMapper );
-            _fixInstance = new FixInstance(fixProtocolDirector, config);
+            _fixInstance = new FixInstance(fixProtocolDirector, config, logFixMessages);
         }
 
         /// <summary>

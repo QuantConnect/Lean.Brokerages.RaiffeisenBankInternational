@@ -42,6 +42,7 @@ namespace QuantConnect.RBI
             { "rbi-port", Config.Get("rbi-port") },
             { "rbi-sender-comp-id", Config.Get("rbi-sender-comp-id") },
             { "rbi-target-comp-id", Config.Get("rbi-target-comp-id") },
+            { "rbi-log-fix-messages", Config.Get("rbi-log-fix-messages") },
 
             { "live-cash-balance", Config.Get("live-cash-balance")},
             { "live-holdings", Config.Get("live-holdings")},
@@ -75,11 +76,13 @@ namespace QuantConnect.RBI
             
             var fixConfig = new FixConfiguration()
             {
-                Host = Read<string>(job.BrokerageData, "wolverine-host", errors),
-                Port = Read<string>(job.BrokerageData, "wolverine-port", errors),
-                SenderCompId = Read<string>(job.BrokerageData, "wolverine-sender-comp-id", errors),
-                TargetCompId = Read<string>(job.BrokerageData, "wolverine-target-comp-id", errors),
+                Host = Read<string>(job.BrokerageData, "rbi-host", errors),
+                Port = Read<string>(job.BrokerageData, "rbi-port", errors),
+                SenderCompId = Read<string>(job.BrokerageData, "rbi-sender-comp-id", errors),
+                TargetCompId = Read<string>(job.BrokerageData, "rbi-target-comp-id", errors),
             };
+            
+            var logFixMessages = Read<bool>(job.BrokerageData, "rbi-log-fix-messages", new List<string>());
 
             Log.Trace(
                 $"CreateBrokerage(): Host {fixConfig.Host}, Port {fixConfig.Port}," +
@@ -97,7 +100,8 @@ namespace QuantConnect.RBI
                 job,
                 Composer.Instance.GetExportedValueByTypeName<IMapFileProvider>(Config.Get("map-file-provider",
                     "QuantConnect.Data.Auxiliary.LocalDiskMapFileProvider")),
-                algorithm.Portfolio
+                algorithm.Portfolio,
+                logFixMessages
             );
             
             return brokerage;
