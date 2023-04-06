@@ -84,7 +84,7 @@ namespace QuantConnect.RBI.Tests
             var firstReport = new ExecutionReport()
             {
                 OrdStatus = new OrdStatus('A'),
-                OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
+                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
                 ClOrdID = new ClOrdID("12345"),
                 ExecType = new ExecType('A'),
                 TransactTime = new TransactTime(DateTime.UtcNow),
@@ -95,7 +95,7 @@ namespace QuantConnect.RBI.Tests
             var secondReport = new ExecutionReport
             {
                 OrdStatus = new OrdStatus('0'),
-                OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
+                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
                 ClOrdID = new ClOrdID("12345"),
                 ExecType = new ExecType('0'),
                 TransactTime = new TransactTime(DateTime.UtcNow)
@@ -159,7 +159,7 @@ namespace QuantConnect.RBI.Tests
             var pendingReport = new ExecutionReport()
             {
                 OrdStatus = new OrdStatus('A'),
-                OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
+                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
                 ClOrdID = new ClOrdID("12345"),
                 ExecType = new ExecType('A'),
                 TransactTime = new TransactTime(DateTime.UtcNow)
@@ -170,7 +170,7 @@ namespace QuantConnect.RBI.Tests
             var newReport = new ExecutionReport
             {
                 OrdStatus = new OrdStatus('0'),
-                OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
+                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
                 ClOrdID = new ClOrdID("12345"),
                 ExecType = new ExecType('0'),
                 TransactTime = new TransactTime(DateTime.UtcNow)
@@ -181,7 +181,7 @@ namespace QuantConnect.RBI.Tests
             var partiallyFilledReport = new ExecutionReport
             {
                 OrdStatus = new OrdStatus('1'),
-                OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
+                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
                 ClOrdID = new ClOrdID("12345"),
                 ExecType = new ExecType('1'),
                 TransactTime = new TransactTime(DateTime.UtcNow),
@@ -195,7 +195,7 @@ namespace QuantConnect.RBI.Tests
             var filledReport = new ExecutionReport
             {
                 OrdStatus = new OrdStatus('2'),
-                OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
+                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
                 ClOrdID = new ClOrdID("12345"),
                 ExecType = new ExecType('2'),
                 TransactTime = new TransactTime(DateTime.UtcNow),
@@ -252,7 +252,7 @@ namespace QuantConnect.RBI.Tests
             var pendingReport = new ExecutionReport()
             {
                 OrdStatus = new OrdStatus('A'),
-                OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
+                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
                 ClOrdID = new ClOrdID("12345"),
                 ExecType = new ExecType('A'),
                 TransactTime = new TransactTime(DateTime.UtcNow),
@@ -263,7 +263,7 @@ namespace QuantConnect.RBI.Tests
             var rejectedReport = new ExecutionReport
             {
                 OrdStatus = new OrdStatus('8'),
-                OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
+                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
                 ClOrdID = new ClOrdID("12345"),
                 ExecType = new ExecType('8'),
                 TransactTime = new TransactTime(DateTime.UtcNow),
@@ -313,7 +313,7 @@ namespace QuantConnect.RBI.Tests
             var rejectedReport = new ExecutionReport
             {
                 OrdStatus = new OrdStatus('5'),
-                OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
+                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
                 ClOrdID = new ClOrdID("123456"),
                 ExecType = new ExecType('5'),
                 TransactTime = new TransactTime(DateTime.UtcNow)
@@ -396,7 +396,7 @@ namespace QuantConnect.RBI.Tests
             var rejectedReport = new ExecutionReport
             {
                 OrdStatus = new OrdStatus('4'),
-                OrderID = new OrderID(_orderProvider.GetOrders(o => true).FirstOrDefault()?.Id.ToString()),
+                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
                 ClOrdID = new ClOrdID("123456"),
                 OrigClOrdID = new OrigClOrdID("12345"),
                 ExecType = new ExecType('4'),
