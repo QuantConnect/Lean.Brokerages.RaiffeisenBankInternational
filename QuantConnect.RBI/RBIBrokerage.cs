@@ -70,6 +70,8 @@ namespace QuantConnect.RBI
             
             var fixProtocolDirector = new FixMessageHandler(config, _fixBrokerageController, securityProvider, symbolMapper );
             _fixInstance = new FixInstance(fixProtocolDirector, config, logFixMessages);
+            
+            ValidateSubscription();
         }
 
         /// <summary>
@@ -281,9 +283,9 @@ namespace QuantConnect.RBI
                     }
                     information.Add("networkInterfaces", interfaceDictionary);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    // NOP, not necessary to crash if fails to extract and add this information
+                    throw new InvalidOperationException($"RBIBrokerage.ValidateSubscription() failed, error: {e.Message}");
                 }
                 // Include our OrganizationId is specified
                 if (!string.IsNullOrEmpty(organizationId))
