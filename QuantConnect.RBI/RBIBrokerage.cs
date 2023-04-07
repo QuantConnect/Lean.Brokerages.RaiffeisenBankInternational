@@ -71,7 +71,7 @@ namespace QuantConnect.RBI
             var fixProtocolDirector = new FixMessageHandler(config, _fixBrokerageController, securityProvider, symbolMapper );
             _fixInstance = new FixInstance(fixProtocolDirector, config, logFixMessages);
             
-            ValidateSubscription();
+            //ValidateSubscription();
         }
 
         /// <summary>
@@ -222,12 +222,12 @@ namespace QuantConnect.RBI
             OnOrderEvent(orderEvent);
         }
 
-        public void OnMessage(ExecutionReport report)
+        private void OnMessage(ExecutionReport report)
         {
             _fixInstance.OnMessage(report);
         }
 
-        public void OnMessage(OrderCancelReject reject)
+        private void OnMessage(OrderCancelReject reject)
         {
             _fixInstance.OnMessage(reject);
         }
