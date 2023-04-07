@@ -165,7 +165,7 @@ namespace QuantConnect.RBI.Tests
         private RBIBrokerage CreateBrokerage()
         {
             return new RBIBrokerage(_fixConfiguration, _orderProvider, _algorithm, _job, TestGlobals.MapFileProvider,
-                new SecurityProvider(), true);
+                new SecurityProvider(), false);
         }
     }
 }
