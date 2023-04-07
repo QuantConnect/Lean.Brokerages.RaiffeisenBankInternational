@@ -6,7 +6,6 @@
   "rbi-port": "",
   "rbi-sender-comp-id": "",
   "rbi-target-comp-id": "",
-  "rbi-log-fix-messages": "true",
-  "live-cash-balance": "",
-  "live-holdings": ""
+  "rbi-log-fix-messages": false,
+  "rbi-product-id": 221
 }
