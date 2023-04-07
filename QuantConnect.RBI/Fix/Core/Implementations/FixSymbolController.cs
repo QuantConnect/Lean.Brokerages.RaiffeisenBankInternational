@@ -30,7 +30,6 @@ public class FixSymbolController : IFixSymbolController
 {
     private readonly IRBIFixConnection _session;
     private readonly RBISymbolMapper _symbolMapper;
-    private readonly IFixBrokerageController _brokerageController;
     private readonly ISecurityProvider _securityProvider;
 
     public FixSymbolController(
@@ -43,20 +42,17 @@ public class FixSymbolController : IFixSymbolController
         _session = session;
         _symbolMapper = mapper;
         _securityProvider = securityProvider;
-        _brokerageController = brokerageController;
-        _brokerageController.Register(this);
+        brokerageController.Register(this);
     }
 
     public bool PlaceOrder(Order order)
     {
         var ticker = _symbolMapper.GetBrokerageSymbol(order.Symbol);
-
         var side = new Side(order.Direction == OrderDirection.Buy ? Side.BUY : Side.SELL);
-        
         var securityId =
             SecurityIdentifier.GenerateEquity(ticker, Market.USA, mappingResolveDate: DateTime.UtcNow);
 
-        var newOrder = new NewOrderSingle()
+        var newOrder = new NewOrderSingle
         {
             ClOrdID = new ClOrdID(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)),
             HandlInst = new HandlInst(HandlInst.AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION),
@@ -65,12 +61,10 @@ public class FixSymbolController : IFixSymbolController
             TransactTime = new TransactTime(DateTime.UtcNow),
             OrderQty = new OrderQty(order.AbsoluteQuantity),
             IDSource = new IDSource(IDSource.ISIN_NUMBER),
-            // change to ISINCode
             SecurityID = new SecurityID(securityId.ToString()),
             TimeInForce = Utility.ConvertTimeInForce(order.TimeInForce, order.Type),
+            ExDestination = new ExDestination(GetOrderExchange(order))
         };
-
-        newOrder.ExDestination = new ExDestination(GetOrderExchange(order));
 
         switch (order.Type)
         {
@@ -95,7 +89,7 @@ public class FixSymbolController : IFixSymbolController
                 break;
 
             default:
-                Log.Trace($"RBI doesn't support this Order Type: {nameof(order.Type)}");
+                Log.Trace($"RBI doesn't support this OrderType: {nameof(order.Type)}");
                 break;
         }
         
@@ -168,8 +162,7 @@ public class FixSymbolController : IFixSymbolController
     private string GetOrderExchange(Order order)
     {
         var exchangeDestination = string.Empty;
-        var orderProperties = order.Properties as OrderProperties;
-        if (orderProperties != null && orderProperties.Exchange != null)
+        if (order.Properties is OrderProperties orderProperties && orderProperties.Exchange != null)
         {
             exchangeDestination = orderProperties.Exchange.ToString();
         }
@@ -179,7 +172,7 @@ public class FixSymbolController : IFixSymbolController
             exchangeDestination = equity?.PrimaryExchange.ToString();
         }
 
-        var exchangeFromMapper = _symbolMapper.GetExchange(exchangeDestination.ToUpper());
+        var exchangeFromMapper = _symbolMapper.GetBrokerageExchange(exchangeDestination.ToUpper());
 
         if (!exchangeFromMapper.isSuccessful)
         {

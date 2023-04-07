@@ -19,6 +19,7 @@ using QuantConnect.Util;
 using QuickFix;
 using QuickFix.FIX42;
 using QuickFix.Transport;
+using Log = QuantConnect.Logging.Log;
 using Message = QuickFix.Message;
 
 namespace QuantConnect.RBI.Fix;
@@ -28,9 +29,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     private readonly IFixMessageHandler _messageHandler;
     private readonly FixConfiguration _config;
     private SocketInitiator _initiator;
-    private readonly SecurityExchangeHours _securityExchangeHours;
     private readonly LogFactory.LogFactory _logFactory;
-    private bool _connected;
 
     private bool _isDisposed;
 
@@ -38,8 +37,6 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     {
         _messageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
         _config = config;
-        _securityExchangeHours =
-            MarketHoursDatabase.FromDataFolder().GetExchangeHours(Market.USA, null, SecurityType.Equity);
         _logFactory = new LogFactory.LogFactory(logFixMesssages);
     }
     
@@ -106,7 +103,9 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     }
 
     public void OnCreate(SessionID sessionID)
-    { }
+    {
+        Log.Trace($"Session created: {sessionID}");
+    }
 
     /// <summary>
     /// Notifies when a successful logon has completed.
@@ -135,11 +134,6 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 
         _isDisposed = true;
         _initiator.DisposeSafely();
-    }
-
-    private bool IsExchangeOpen()
-    {
-        return _securityExchangeHours.IsOpen(DateTime.UtcNow.ConvertFromUtc(_securityExchangeHours.TimeZone), true);
     }
 
     public void OnMessage(ExecutionReport report)

@@ -13,6 +13,7 @@
  * limitations under the License.
 */
 
+using QuantConnect.Logging;
 using QuantConnect.Orders;
 using QuickFix.Fields;
 using QuickFix.FIX42;
@@ -72,6 +73,7 @@ namespace QuantConnect.RBI.Fix.Utils
                     return OrderStatus.New;
 
                 default:
+                    Log.Error($"RBI doesn't support this ExecType: {execType}");
                     return OrderStatus.Invalid;
             }
         }
