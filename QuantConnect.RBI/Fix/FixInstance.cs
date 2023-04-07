@@ -30,8 +30,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     private SocketInitiator _initiator;
     private readonly SecurityExchangeHours _securityExchangeHours;
     private readonly LogFactory.LogFactory _logFactory;
-    private CancellationTokenSource _cancellationTokenSource;
-    private volatile bool _connected;
+    private bool _connected;
 
     private bool _isDisposed;
 
@@ -46,7 +45,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     
     public bool IsConnected()
     {
-        return _connected && !_isDisposed;
+        return _initiator.IsLoggedOn && !_isDisposed;
     }
 
     public void Initialize()
@@ -56,29 +55,6 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
         _initiator = new SocketInitiator(this, storeFactory, settings, _logFactory,
             _messageHandler.MessageFactory);
         _initiator.Start();
-        // _cancellationTokenSource = new CancellationTokenSource();
-        // _connected = Connect();
-        // Task.Factory.StartNew(() =>
-        // {
-        //     var retry = 0;
-        //     var timeoutLoop = TimeSpan.FromMinutes(1);
-        //     while (!_cancellationTokenSource.Token.IsCancellationRequested)
-        //     {
-        //         if (_cancellationTokenSource.Token.WaitHandle.WaitOne(timeoutLoop))
-        //         {
-        //             break;
-        //         }
-        //
-        //         if (!Connect())
-        //         {
-        //            Log.Error($"FixInstance(): connection failed");
-        //         }
-        //         else
-        //         {
-        //             retry = 0;
-        //         }
-        //     }
-    // });
     }
 
     public void Terminate()

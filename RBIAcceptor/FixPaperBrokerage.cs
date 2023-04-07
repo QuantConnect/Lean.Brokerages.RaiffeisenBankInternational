@@ -20,7 +20,8 @@ public class FixPaperBrokerage : MessageCracker, IApplication
         var settings = Utils.GetBaseSettings("acceptor");
 
         var orderRoutingDic = new Dictionary();
-        orderRoutingDic.SetLong("SocketAcceptPort", 5080);
+        orderRoutingDic.SetLong("SocketAcceptPort", 5000);
+        orderRoutingDic.SetString("SocketAcceptHost", "192.168.1.104");
         var orderRoutingSessionId = new SessionID(settings.Get().GetString("BeginString"), senderCompId, targetCompId);
         settings.Set(orderRoutingSessionId, orderRoutingDic);
 
@@ -36,6 +37,19 @@ public class FixPaperBrokerage : MessageCracker, IApplication
     public void FromAdmin(Message message, SessionID sessionID)
     {
         Console.WriteLine($"FixGatewayBrokerage.FromAdmin({sessionID}): {message}");
+        var msgType = message.Header.GetString(Tags.MsgType);
+        if (msgType == MsgType.ORDER_SINGLE)
+        {
+            OnMessage((NewOrderSingle) message, sessionID);
+        }
+        else if (msgType == MsgType.ORDER_CANCEL)
+        {
+            OnMessage((OrderCancelRequest) message, sessionID);
+        }
+        else if (msgType == MsgType.ORDERCANCELREPLACEREQUEST)
+        {
+            OnMessage((OrderCancelReplaceRequest) message, sessionID);
+        }
     }
 
     public void FromApp(Message message, SessionID sessionID)
@@ -45,6 +59,14 @@ public class FixPaperBrokerage : MessageCracker, IApplication
         if (msgType == MsgType.ORDER_SINGLE)
         {
             OnMessage((NewOrderSingle) message, sessionID);
+        }
+        else if (msgType == MsgType.ORDERCANCELREQUEST)
+        {
+            OnMessage((OrderCancelRequest) message, sessionID);
+        }
+        else if (msgType == MsgType.ORDERCANCELREPLACEREQUEST)
+        {
+            OnMessage((OrderCancelReplaceRequest) message, sessionID);
         }
     }
 
@@ -122,6 +144,7 @@ public class FixPaperBrokerage : MessageCracker, IApplication
         exReport.Set(orderQty);
         exReport.Set(new LastShares(orderQty.getValue()));
         exReport.Set(new LastPx(price.getValue()));
+        exReport.Set(new TransactTime(DateTime.UtcNow));
 
         if (n.IsSetAccount())
             exReport.SetField(n.Account);
@@ -148,10 +171,17 @@ public class FixPaperBrokerage : MessageCracker, IApplication
         {
             OrdStatus = new OrdStatus('5'),
             OrderID = new OrderID(orderid),
-            ClOrdID = request.ClOrdID,
-            OrigClOrdID = request.OrigClOrdID,
+            ClOrdID = new ClOrdID(request.OrigClOrdID.Obj),
+            OrigClOrdID = new OrigClOrdID(request.ClOrdID.Obj),
             ExecType = new ExecType('5'),
-            TransactTime = new TransactTime(DateTime.UtcNow)
+            TransactTime = new TransactTime(DateTime.UtcNow),
+            ExecID = new ExecID(GenExecID()),
+            ExecTransType = new ExecTransType('1'),
+            Symbol = request.Symbol,
+            Side = request.Side,
+            LeavesQty = new LeavesQty(20),
+            CumQty = new CumQty(1),
+            AvgPx = new AvgPx(2)
         };
         
         try
@@ -174,7 +204,14 @@ public class FixPaperBrokerage : MessageCracker, IApplication
             ClOrdID = request.ClOrdID,
             OrigClOrdID = request.OrigClOrdID,
             ExecType = new ExecType('4'),
-            TransactTime = new TransactTime(DateTime.UtcNow)
+            TransactTime = new TransactTime(DateTime.UtcNow),
+            ExecID = new ExecID(GenExecID()),
+            ExecTransType = new ExecTransType('1'),
+            Symbol = request.Symbol,
+            Side = request.Side,
+            LeavesQty = new LeavesQty(20),
+            CumQty = new CumQty(1),
+            AvgPx = new AvgPx(2)
         };
         
         try

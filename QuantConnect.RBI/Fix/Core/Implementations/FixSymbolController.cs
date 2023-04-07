@@ -67,7 +67,6 @@ public class FixSymbolController : IFixSymbolController
             IDSource = new IDSource(IDSource.ISIN_NUMBER),
             // change to ISINCode
             SecurityID = new SecurityID(securityId.ToString()),
-            Currency = new Currency(order.PriceCurrency),
             TimeInForce = Utility.ConvertTimeInForce(order.TimeInForce, order.Type),
         };
 
@@ -107,21 +106,33 @@ public class FixSymbolController : IFixSymbolController
 
     public bool CancelOrder(Order order)
     {
+        var ticker = _symbolMapper.GetBrokerageSymbol(order.Symbol);
+
         return _session.Send(new OrderCancelRequest
         {
             ClOrdID = new ClOrdID(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)),
-            OrigClOrdID = new OrigClOrdID(order.BrokerId[0])
+            OrigClOrdID = new OrigClOrdID(order.BrokerId[0]),
+            Side = new Side(order.Direction == OrderDirection.Buy ? Side.BUY : Side.SELL),
+            TransactTime = new TransactTime(DateTime.UtcNow),
+            Symbol = new QuickFix.Fields.Symbol(ticker),
+            OrderID = new OrderID(order.Id.ToString()),
         });
     }
 
     public bool UpdateOrder(Order order)
     {
+        var ticker = _symbolMapper.GetBrokerageSymbol(order.Symbol);
+        
         var request = new OrderCancelReplaceRequest
         {
             ClOrdID = new ClOrdID(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)),
             OrigClOrdID = new OrigClOrdID(order.BrokerId[0]),
-            TransactTime = new TransactTime(order.Time),
+            TransactTime = new TransactTime(DateTime.UtcNow),
             OrderQty = new OrderQty(order.Quantity),
+            Side = new Side(order.Direction == OrderDirection.Buy ? Side.BUY : Side.SELL),
+            Symbol = new QuickFix.Fields.Symbol(ticker),
+            HandlInst = new HandlInst(HandlInst.AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION),
+            OrderID = new OrderID(order.Id.ToString())
         };
 
         switch (order.Type)

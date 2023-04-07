@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using NUnit.Framework;
@@ -24,15 +25,12 @@ using QuantConnect.Tests;
 using QuantConnect.Orders;
 using QuantConnect.Packets;
 using QuantConnect.RBI.Fix;
-using QuantConnect.RBI.Fix.Core.Implementations;
 using QuantConnect.Tests.Brokerages;
-using QuickFix;
-using QuickFix.Fields;
-using QuickFix.FIX42;
 
 namespace QuantConnect.RBI.Tests
 {
     [TestFixture]
+    [Ignore("Requires valid config.json")]
     public class RBIBrokerageTests
     {
         private readonly FixConfiguration _fixConfiguration = new()
@@ -48,244 +46,62 @@ namespace QuantConnect.RBI.Tests
 
         [Test]
         [TestCase("GOOCV", 210, 230)]
-        public void PlaceOrderWithResponse(string ticker, decimal quantity, decimal price)
+        public void ConnectionTest(string ticker, decimal quantity, decimal price)
         {
-            using var brokerage =
-                CreateBrokerage();
-            var submittedEvent = new ManualResetEvent(false);
-            var pendingEvent = new ManualResetEvent(false);
-                
-            brokerage.OrdersStatusChanged += (sender, e) =>
-            {
-                if (e.Single().Status == OrderStatus.Submitted)
-                {
-                    submittedEvent.Set();
-                }
-        
-                if (e.Single().Status == OrderStatus.New)
-                {
-                    pendingEvent.Set();
-                }
-            };
-        
-            brokerage.Connect(_fixConfiguration);
-        
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
-                DateTime.UtcNow, price);
-        
-            var properties = order.Properties as OrderProperties;
-        
-            properties.Exchange = Exchange.EDGA;
-        
-            _orderProvider.Add(order);
-        
-            brokerage.PlaceOrder(order);
-        
-            var firstReport = new ExecutionReport()
-            {
-                OrdStatus = new OrdStatus('A'),
-                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("12345"),
-                ExecType = new ExecType('A'),
-                TransactTime = new TransactTime(DateTime.UtcNow),
-            };
-        
-            brokerage.OnMessage(firstReport);
-        
-            var secondReport = new ExecutionReport
-            {
-                OrdStatus = new OrdStatus('0'),
-                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("12345"),
-                ExecType = new ExecType('0'),
-                TransactTime = new TransactTime(DateTime.UtcNow)
-            };
-        
-            brokerage.OnMessage(secondReport);
+            using var brokerage = CreateBrokerage();
+            
+            brokerage.Connect();
+            
+            Thread.Sleep(10000);
 
-            // Assert.IsTrue(submittedEvent.WaitOne(TimeSpan.FromSeconds(20)));
-            // Assert.IsTrue(pendingEvent.WaitOne(TimeSpan.FromSeconds(20)));
+            Assert.IsTrue(brokerage.IsConnected);
             
             brokerage.Disconnect();
         }
-        
-        [Test]
-        [TestCase("GOOCV", 220, 230)]
-        public void PlaceOrderWithPartialFill(string ticker, decimal quantity, decimal price)
-        {
-            using var brokerage =
-                CreateBrokerage();
-            var submittedEvent = new ManualResetEvent(false);
-            var partialFilledEvent = new ManualResetEvent(false);
-            var filledEvent = new ManualResetEvent(false);
-            var pendingEvent = new ManualResetEvent(false);
-        
-            brokerage.OrdersStatusChanged += (sender, e) =>
-            {
-                if (e.Single().Status == OrderStatus.Submitted)
-                {
-                    submittedEvent.Set();
-                }
-        
-                else if (e.Single().Status == OrderStatus.New)
-                {
-                    pendingEvent.Set();
-                }
-                
-                else if (e.Single().Status == OrderStatus.PartiallyFilled)
-                {
-                    partialFilledEvent.Set();
-                }
-        
-                else if (e.Single().Status == OrderStatus.Filled)
-                {
-                    filledEvent.Set();
-                }
-            };
-        
-            brokerage.Connect(_fixConfiguration);
-        
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
-                DateTime.UtcNow, price);
-            
-            var properties = order.Properties as OrderProperties;
-        
-            properties.Exchange = Exchange.EDGA;
-        
-            _orderProvider.Add(order);
-        
-            brokerage.PlaceOrder(order);
-        
-            var pendingReport = new ExecutionReport()
-            {
-                OrdStatus = new OrdStatus('A'),
-                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("123456"),
-                ExecType = new ExecType('A'),
-                TransactTime = new TransactTime(DateTime.UtcNow)
-            };
-        
-            brokerage.OnMessage(pendingReport);
-        
-            var newReport = new ExecutionReport
-            {
-                OrdStatus = new OrdStatus('0'),
-                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("123456"),
-                ExecType = new ExecType('0'),
-                TransactTime = new TransactTime(DateTime.UtcNow)
-            };
-        
-            brokerage.OnMessage(newReport);
-        
-            var partiallyFilledReport = new ExecutionReport
-            {
-                OrdStatus = new OrdStatus('1'),
-                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("123456"),
-                ExecType = new ExecType('1'),
-                TransactTime = new TransactTime(DateTime.UtcNow),
-                LastShares = new LastShares(200),
-                CumQty = new CumQty(100),
-                LastPx = new LastPx(300)
-            };
-        
-            brokerage.OnMessage(partiallyFilledReport);
-        
-            var filledReport = new ExecutionReport
-            {
-                OrdStatus = new OrdStatus('2'),
-                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("123456"),
-                ExecType = new ExecType('2'),
-                TransactTime = new TransactTime(DateTime.UtcNow),
-                LastShares = new LastShares(20),
-                CumQty = new CumQty(220),
-                LastPx = new LastPx(250)
-            };
-        
-            brokerage.OnMessage(filledReport);
-        
-            // Assert.IsTrue(submittedEvent.WaitOne(TimeSpan.FromSeconds(10)));
-            // Assert.IsTrue(pendingEvent.WaitOne(TimeSpan.FromSeconds(10)));
-            // Assert.IsTrue(partialFilledEvent.WaitOne(TimeSpan.FromSeconds(10)));
-            // Assert.IsTrue(filledEvent.WaitOne(TimeSpan.FromSeconds(10)));
-            
-            brokerage.Disconnect();
-        }
-        
+
         [Test]
         [TestCase("GOOCV", 210, 230)]
-        public void PlaceOrderWithReject(string ticker, decimal quantity, decimal price)
+        public void PlaceOrderWithResponse(string ticker, decimal quantity, decimal price)
         {
-            using var brokerage =
-                CreateBrokerage();
-            var rejectedEvent = new ManualResetEvent(false);
-            var pendingEvent = new ManualResetEvent(false);
-        
+            using var brokerage = CreateBrokerage();
+            var submittedEvent = new ManualResetEvent(false);
+
             brokerage.OrdersStatusChanged += (sender, e) =>
             {
-                if (e.Single().Status == OrderStatus.Invalid)
+                if (e.Single().Status == OrderStatus.Filled)
                 {
-                    rejectedEvent.Set();
-                }
-        
-                if (e.Single().Status == OrderStatus.New)
-                {
-                    pendingEvent.Set();
+                    submittedEvent.Set();
                 }
             };
         
-            brokerage.Connect(_fixConfiguration);
+            brokerage.Connect();
+            
+            Thread.Sleep(1000);
+
+            Assert.IsTrue(brokerage.IsConnected);
         
             var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
                 DateTime.UtcNow, price);
-            
+        
             var properties = order.Properties as OrderProperties;
         
             properties.Exchange = Exchange.EDGA;
         
             _orderProvider.Add(order);
         
-            brokerage.PlaceOrder(order);
-        
-            var pendingReport = new ExecutionReport()
-            {
-                OrdStatus = new OrdStatus('A'),
-                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("123456"),
-                ExecType = new ExecType('A'),
-                TransactTime = new TransactTime(DateTime.UtcNow),
-            };
-        
-            brokerage.OnMessage(pendingReport);
-        
-            var rejectedReport = new ExecutionReport
-            {
-                OrdStatus = new OrdStatus('8'),
-                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("123456"),
-                ExecType = new ExecType('8'),
-                TransactTime = new TransactTime(DateTime.UtcNow),
-                Text = new Text("Dynamic  limits:  limit  would  be  breached,  Order price(273) is below minimum allowed soft price (700.5)")
-            };
-        
-            brokerage.OnMessage(rejectedReport);
-        
-            // Assert.IsTrue(pendingEvent.WaitOne(TimeSpan.FromSeconds(20)));
-            // Assert.IsTrue(rejectedEvent.WaitOne(TimeSpan.FromSeconds(20)));
-            
+            Assert.IsTrue(brokerage.PlaceOrder(order));
+
+            Assert.IsTrue(submittedEvent.WaitOne(TimeSpan.FromSeconds(20)));
+
             brokerage.Disconnect();
         }
-        
+
         [Test]
         [TestCase("GOOCV", 210, 230)]
         public void ModifyOrder(string ticker, decimal quantity, decimal price)
         {
-            using var brokerage =
-                CreateBrokerage();
+            using var brokerage = CreateBrokerage();
             var replacedEvent = new ManualResetEvent(false);
-        
             brokerage.OrdersStatusChanged += (sender, e) =>
             {
         
@@ -295,79 +111,30 @@ namespace QuantConnect.RBI.Tests
                 }
             };
         
-            brokerage.Connect(_fixConfiguration);
-        
+            brokerage.Connect();
+            Thread.Sleep(1000);
+            Assert.IsTrue(brokerage.IsConnected);
+            
             var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
                 DateTime.UtcNow, price);
-            
             var properties = order.Properties as OrderProperties;
-            
-        
             properties.Exchange = Exchange.EDGA;
-
             _orderProvider.Add(order);
         
-            brokerage.PlaceOrder(order);
-        
-            brokerage.UpdateOrder(order);
-        
-            var rejectedReport = new ExecutionReport
-            {
-                OrdStatus = new OrdStatus('5'),
-                OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-                ClOrdID = new ClOrdID("123456"),
-                ExecType = new ExecType('5'),
-                TransactTime = new TransactTime(DateTime.UtcNow)
-            };
-        
-            brokerage.OnMessage(rejectedReport);
-            
-            // Assert.IsTrue(replacedEvent.WaitOne(TimeSpan.FromSeconds(20)));
+            Assert.IsTrue(brokerage.PlaceOrder(order));
+            Thread.Sleep(5000);
+            Assert.IsTrue(brokerage.UpdateOrder(order));
+            Assert.IsTrue(replacedEvent.WaitOne(TimeSpan.FromSeconds(20)));
             
             brokerage.Disconnect();
         }
         
-        [Test]
-        [TestCase("GOOCV", 210, 230)]
-        // [Ignore("")]
-        public void ModifyOrderReject(string ticker, decimal quantity, decimal price)
-        {
-            using var brokerage =
-                CreateBrokerage();
-        
-            brokerage.Connect(_fixConfiguration);
-        
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
-                DateTime.UtcNow, price);
-            
-            var properties = order.Properties as OrderProperties;
-        
-            properties.Exchange = Exchange.EDGA;
-        
-            _orderProvider.Add(order);
-        
-            brokerage.PlaceOrder(order);
-        
-            brokerage.UpdateOrder(order);
-        
-            var rejection = new OrderCancelReject
-            {
-                CxlRejReason = new CxlRejReason(0),
-                CxlRejResponseTo = new CxlRejResponseTo('2'),
-                Text = new Text("FIX IN: Order is already filled or canceled")
-            };
-        
-            brokerage.OnMessage(rejection);
-            
-            brokerage.Disconnect();
-        }
         
         [Test]
         [TestCase("GOOCV", 210, 230)]
         public void CancelOrder(string ticker, decimal quantity, decimal price)
         {
-            using var brokerage =
-                CreateBrokerage();
+            using var brokerage = CreateBrokerage();
             var canceledEvent = new ManualResetEvent(false);
         
             brokerage.OrdersStatusChanged += (sender, e) =>
@@ -378,187 +145,22 @@ namespace QuantConnect.RBI.Tests
                 }
             };
         
-            brokerage.Connect(_fixConfiguration);
+            brokerage.Connect();
+            Thread.Sleep(1000);
+            Assert.IsTrue(brokerage.IsConnected);
         
             var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
                 DateTime.UtcNow, price);
-            
             var properties = order.Properties as OrderProperties;
-        
             properties.Exchange = Exchange.EDGA;
-        
             _orderProvider.Add(order);
         
-            brokerage.PlaceOrder(order);
-        
-            brokerage.CancelOrder(order);
-        
-            // var rejectedReport = new ExecutionReport
-            // {
-            //     OrdStatus = new OrdStatus('4'),
-            //     OrderID = new OrderID(_orderProvider.GetOrders(_ => true).FirstOrDefault()?.Id.ToString()),
-            //     ClOrdID = new ClOrdID("123456"),
-            //     OrigClOrdID = new OrigClOrdID("123456"),
-            //     ExecType = new ExecType('4'),
-            //     TransactTime = new TransactTime(DateTime.UtcNow)
-            // };
-            //
-            // brokerage.OnMessage(rejectedReport);
-            //
-            // Assert.IsTrue(canceledEvent.WaitOne(TimeSpan.FromSeconds(20)));
-            //
-            // brokerage.Disconnect();
-        }
-        
-        [Test]
-        [TestCase("GOOCV", 210, 230)]
-        // [Ignore("")]
-        public void CancelOrderReject(string ticker, decimal quantity, decimal price)
-        {
-            using var brokerage =
-                CreateBrokerage();
-        
-            brokerage.Connect(_fixConfiguration);
-        
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
-                DateTime.UtcNow, price);
-            
-            var properties = order.Properties as OrderProperties;
-        
-            properties.Exchange = Exchange.EDGA;
-        
-            _orderProvider.Add(order);
-        
-            brokerage.PlaceOrder(order);
-        
-            brokerage.UpdateOrder(order);
-        
-            // var rejection = new OrderCancelReject
-            // {
-            //     CxlRejReason = new CxlRejReason(0),
-            //     CxlRejResponseTo = new CxlRejResponseTo('2'),
-            //     Text = new Text("FIX IN: Order is already filled or canceled")
-            // };
-            //
-            // brokerage.OnMessage(rejection);
+            Assert.IsTrue(brokerage.PlaceOrder(order));
+            Thread.Sleep(5000);
+            Assert.IsTrue(brokerage.CancelOrder(order));
+            Assert.IsTrue(canceledEvent.WaitOne(TimeSpan.FromSeconds(20)));
             
             brokerage.Disconnect();
-        }
-        
-        [Test]
-        [TestCase("GOOCV", 210, 230)]
-        [Ignore("Requires configured RBIAcceptor or any acceptor")]
-        public void PlaceOrderOnline(string ticker, decimal quantity, decimal price)
-        {
-            using var brokerage =
-                CreateBrokerage();
-            var submittedEvent = new ManualResetEvent(false);
-            var pendingEvent = new ManualResetEvent(false);
-                
-            brokerage.OrdersStatusChanged += (sender, e) =>
-            {
-                if (e.Single().Status == OrderStatus.Submitted)
-                {
-                    submittedEvent.Set();
-                }
-        
-                if (e.Single().Status == OrderStatus.New)
-                {
-                    pendingEvent.Set();
-                }
-            };
-            
-            brokerage.Connect();
-        
-            Assert.IsTrue(brokerage.IsConnected);
-        
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
-                DateTime.UtcNow, price);
-        
-            var properties = order.Properties as OrderProperties;
-        
-            properties.Exchange = Exchange.EDGA;
-        
-            _orderProvider.Add(order);
-        
-            brokerage.PlaceOrder(order);
-        
-            Assert.IsTrue(submittedEvent.WaitOne(TimeSpan.FromSeconds(20)));
-            Assert.IsTrue(pendingEvent.WaitOne(TimeSpan.FromSeconds(20)));
-        }
-        
-        [Test]
-        [TestCase("GOOCV", 210, 230)]
-        [Ignore("Requires configured RBIAcceptor or any acceptor")]
-        public void ModifyOrderOnline(string ticker, decimal quantity, decimal price)
-        {
-            using var brokerage =
-                CreateBrokerage();
-            var replacedEvent = new ManualResetEvent(false);
-        
-            brokerage.OrdersStatusChanged += (sender, e) =>
-            {
-        
-                if (e.Single().Status == OrderStatus.UpdateSubmitted)
-                {
-                    replacedEvent.Set();
-                }
-            };
-        
-            brokerage.Connect();
-            Assert.IsTrue(brokerage.IsConnected);
-        
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
-                DateTime.UtcNow, price);
-            
-            var properties = order.Properties as OrderProperties;
-        
-            properties.Exchange = Exchange.EDGA;
-        
-            _orderProvider.Add(order);
-        
-            brokerage.PlaceOrder(order);
-        
-            brokerage.UpdateOrder(order);
-        
-            Assert.IsTrue(replacedEvent.WaitOne(TimeSpan.FromSeconds(20)));
-        }
-        
-        [Test]
-        [TestCase("GOOCV", 210, 230)]
-        [Ignore("Requires configured RBIAcceptor or any acceptor")]
-        public void CancelOrderOnline(string ticker, decimal quantity, decimal price)
-        {
-            using var brokerage =
-                CreateBrokerage();
-            var canceledEvent = new ManualResetEvent(false);
-        
-            brokerage.OrdersStatusChanged += (sender, e) =>
-            { 
-                if (e.Single().Status == OrderStatus.Canceled)
-                {
-                    canceledEvent.Set();
-                }
-            };
-        
-            brokerage.Connect();
-        
-            Assert.IsTrue(brokerage.IsConnected);
-        
-            var order = new MarketOrder(Symbol.Create(ticker, SecurityType.Equity, Market.USA), quantity,
-                DateTime.UtcNow, price);
-            
-            var properties = order.Properties as OrderProperties;
-        
-            properties.Exchange = Exchange.EDGA;
-        
-            _orderProvider.Add(order);
-        
-            brokerage.PlaceOrder(order);
-        
-            brokerage.CancelOrder(order);
-        
-            Assert.IsTrue(canceledEvent.WaitOne(TimeSpan.FromSeconds(20)));
         }
 
         private RBIBrokerage CreateBrokerage()
