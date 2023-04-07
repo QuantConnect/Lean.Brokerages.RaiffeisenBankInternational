@@ -14,6 +14,7 @@
 */
 
 using System.Collections.Concurrent;
+using QuantConnect.Logging;
 using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Core.Interfaces;
 using QuantConnect.RBI.Fix.Utils;
@@ -26,6 +27,7 @@ public class FixBrokerageController : IFixBrokerageController
 {
     private readonly ConcurrentDictionary<string, ExecutionReport> _executions = new();
     private IFixSymbolController _symbolController;
+    private bool _isControllerRegistered;
 
     private readonly RBISymbolMapper _symbolMapper;
 
@@ -45,6 +47,7 @@ public class FixBrokerageController : IFixBrokerageController
         }
 
         _symbolController = controller ?? throw new ArgumentNullException(nameof(controller));
+        _isControllerRegistered = true;
     }
 
     public void Unregister(IFixSymbolController controller)
@@ -61,12 +64,14 @@ public class FixBrokerageController : IFixBrokerageController
         }
 
         _symbolController = null;
+        _isControllerRegistered = false;
     }
 
     public bool PlaceOrder(Order order)
     {
-        if (_symbolController == null)
+        if (!_isControllerRegistered)
         {
+            Log.Error("No controller has been registered, error with LogOn");
             return false;
         }
         
@@ -75,8 +80,9 @@ public class FixBrokerageController : IFixBrokerageController
 
     public bool CancelOrder(Order order)
     {
-        if (_symbolController == null)
+        if (!_isControllerRegistered)
         {
+            Log.Error("No controller has been registered, error with LogOn");
             return false;
         }
         
@@ -85,8 +91,9 @@ public class FixBrokerageController : IFixBrokerageController
 
     public bool UpdateOrder(Order order)
     {
-        if (_symbolController == null)
+        if (!_isControllerRegistered)
         {
+            Log.Error("No controller has been registered, error with LogOn");
             return false;
         }
 
@@ -100,7 +107,6 @@ public class FixBrokerageController : IFixBrokerageController
     
     public void Receive(ExecutionReport execution)
     {
-
         var orderId = execution.ClOrdID.getValue();
         var orderStatus = execution.OrdStatus.getValue();
         if (orderStatus != OrdStatus.REJECTED)
@@ -132,12 +138,12 @@ public class FixBrokerageController : IFixBrokerageController
         var time = report.TransactTime.getValue();
         var orderType = Utility.ConvertOrderType(report.OrdType.getValue());
 
-        Order order = null;
+        Order order = new MarketOrder(symbol, orderQty, time, report.Price.Obj );
         
         switch (orderType)
         {
             case OrderType.Market:
-                order = new MarketOrder();
+                order = new MarketOrder(symbol, orderQty, time, report.Price.Obj );
                 break;
 
             case OrderType.Limit:
@@ -171,7 +177,7 @@ public class FixBrokerageController : IFixBrokerageController
                 break;
         }
         
-        order?.BrokerId.Add(report.ClOrdID.getValue());
+        order.BrokerId.Add(report.ClOrdID.getValue());
 
         return order;
     }

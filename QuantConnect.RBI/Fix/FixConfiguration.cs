@@ -19,7 +19,7 @@ namespace QuantConnect.RBI.Fix;
 
 public class FixConfiguration
 {
-    public string FixVersionString { get; set; } = "FIX.4.2";
+    private const string FixVersionString = "FIX.4.2";
     public string SenderCompId { get; set; }
     public string TargetCompId { get; set; }
     public string Host { get; set; }

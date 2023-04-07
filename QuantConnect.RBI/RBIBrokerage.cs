@@ -32,7 +32,6 @@ using QuantConnect.RBI.Fix.Core.Implementations;
 using QuantConnect.RBI.Fix.Core.Interfaces;
 using QuantConnect.RBI.Fix.Utils;
 using QuantConnect.Util;
-using QuickFix;
 using QuickFix.FIX42;
 using RestSharp;
 using Log = QuantConnect.Logging.Log;
@@ -48,6 +47,8 @@ namespace QuantConnect.RBI
         private readonly IOrderProvider _orderProvider;
         private readonly IAlgorithm _algorithm;
         private readonly LiveNodePacket _job;
+        
+        private const string _orderEventMessage = "RBI OnOrderEvent";
 
         public RBIBrokerage(
             FixConfiguration config,
@@ -68,7 +69,7 @@ namespace QuantConnect.RBI
 
             _fixBrokerageController.ExecutionReport += OnExecutionReport;
             
-            var fixProtocolDirector = new FixMessageHandler(config, _fixBrokerageController, securityProvider, symbolMapper );
+            var fixProtocolDirector = new FixMessageHandler(_fixBrokerageController, securityProvider, symbolMapper );
             _fixInstance = new FixInstance(fixProtocolDirector, config, logFixMessages);
             
             //ValidateSubscription();
@@ -142,14 +143,6 @@ namespace QuantConnect.RBI
         /// <summary>
         /// Connects the client to the broker's remote servers
         /// </summary>
-        public void Connect(FixConfiguration config)
-        {
-            _fixInstance.Initialize();
-            var sessionId = new SessionID(config.FixVersionString, config.SenderCompId, config.TargetCompId);
-
-            _fixInstance.OnLogon(sessionId);
-        }
-
         public override void Connect()
         {
             _fixInstance.Initialize();
@@ -164,16 +157,19 @@ namespace QuantConnect.RBI
         }
         
         #endregion
-
+        
+        /// <summary>
+        ///  Execution report receiver
+        /// </summary>
+        /// <param name="sender">Sender</param>
+        /// <param name="report">Execution report</param>
         private void OnExecutionReport(object sender, ExecutionReport report)
         {
-            Log.Trace($"OnExecutionReport(): {sender} sent {report}");
-
             var orderStatus = Utility.ConvertOrderStatus(report);
 
             var ordId = orderStatus == OrderStatus.Canceled
                 ? report.OrigClOrdID.getValue()
-                : report.ClOrdID.getValue();
+                : report.ClOrdID.getValue(); // gets OrigClOrdId if status is cancelled, otherwise -> ClOrdID
 
             var transactTime = report.TransactTime.getValue();
 
@@ -181,11 +177,11 @@ namespace QuantConnect.RBI
 
             if (order == null)
             {
-                Log.Trace($"No order with Id {ordId} was found");
+                Log.Error($"RBIBrokerage.OnExecutionReport(): Unable to locate order with BrokerageId: {ordId}");
                 return;
             }
 
-            var message = "RBI OnOrderEvent";
+            var message = _orderEventMessage;
 
             if (report.IsSetText())
             {
@@ -235,11 +231,11 @@ namespace QuantConnect.RBI
         /// <summary>
         /// Validate the user of this project has permission to be using it via our web API.
         /// </summary>
-        private static void ValidateSubscription()
+        private void ValidateSubscription()
         {
             try
             {
-                var productId = 221; // todo: need to get productIddd from QC
+                var productId = Config.GetInt("rbi-product-id");
                 var userId = Config.GetInt("job-user-id");
                 var token = Config.Get("api-access-token");
                 var organizationId = Config.Get("job-organization-id", null);

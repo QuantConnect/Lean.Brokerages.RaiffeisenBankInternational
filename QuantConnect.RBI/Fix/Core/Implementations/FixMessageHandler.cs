@@ -31,23 +31,22 @@ namespace QuantConnect.RBI.Fix.Core.Implementations;
 
 public class FixMessageHandler : MessageCracker, IFixMessageHandler
 {
-    private readonly FixConfiguration _config;
     private readonly IFixBrokerageController _brokerageController;
     private readonly ISecurityProvider _securityProvider;
     private readonly RBISymbolMapper _symbolMapper;
-    private ConcurrentDictionary<SessionID, IFixSymbolController> _sessionHandlers = new();
+    private readonly ConcurrentDictionary<SessionID, IFixSymbolController> _sessionHandlers = new();
+
+    public IMessageFactory MessageFactory { get; set; }
 
     private int _expectedMsgSeqNumLogOn;
 
     public FixMessageHandler(
-        FixConfiguration config,
         IFixBrokerageController brokerageController,
         ISecurityProvider securityProvider,
         RBISymbolMapper symbolMapper)
     {
         _symbolMapper = symbolMapper;
         _securityProvider = securityProvider;
-        _config = config;
         _brokerageController = brokerageController;
     }
 
@@ -57,8 +56,6 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
                _sessionHandlers.All(kvp => Session.LookupSession(kvp.Key).IsLoggedOn);
     }
 
-    public IMessageFactory MessageFactory { get; set; }
-    
     public void Handle(Message message, SessionID sessionId)
     {
         if (!_sessionHandlers.TryGetValue(sessionId, out var handler))

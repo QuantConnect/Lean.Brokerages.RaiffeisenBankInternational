@@ -65,7 +65,7 @@ public class RBISymbolMapper : ISymbolMapper
     public Symbol GetLeanSymbol(string brokerageSymbol, SecurityType securityType, string market,
         DateTime expirationDate = default, decimal strike = 0, OptionRight optionRight = OptionRight.Call)
     {
-        throw new NotImplementedException();
+        return Symbol.Create(brokerageSymbol, securityType, market);
     }
 
     public SecurityType GetLeanSecurityType(string productType)
@@ -88,7 +88,7 @@ public class RBISymbolMapper : ISymbolMapper
         return securityTypeBrokerage;
     }
 
-    public (bool isSuccessful, string? exchange) GetExchange(string leanExchange)
+    public (bool isSuccessful, string? exchange) GetBrokerageExchange(string leanExchange)
     {
         return (_mapLeanExchangeToExchange.TryGetValue(leanExchange, out var exchange), exchange);
     }
