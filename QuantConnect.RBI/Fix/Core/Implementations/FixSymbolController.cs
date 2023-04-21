@@ -31,17 +31,20 @@ public class FixSymbolController : IFixSymbolController
     private readonly IRBIFixConnection _session;
     private readonly RBISymbolMapper _symbolMapper;
     private readonly ISecurityProvider _securityProvider;
+    private readonly Account _account;
 
     public FixSymbolController(
         IRBIFixConnection session,
         IFixBrokerageController brokerageController,
         ISecurityProvider securityProvider,
-        RBISymbolMapper mapper
+        RBISymbolMapper mapper,
+        string account
         )
     {
         _session = session;
         _symbolMapper = mapper;
         _securityProvider = securityProvider;
+        _account = new Account(account);
         brokerageController.Register(this);
     }
 
@@ -63,7 +66,8 @@ public class FixSymbolController : IFixSymbolController
             IDSource = new IDSource(IDSource.ISIN_NUMBER),
             SecurityID = new SecurityID(securityId.ToString()),
             TimeInForce = Utility.ConvertTimeInForce(order.TimeInForce, order.Type),
-            ExDestination = new ExDestination(GetOrderExchange(order))
+            ExDestination = new ExDestination(GetOrderExchange(order)),
+            Account = _account,
         };
 
         switch (order.Type)

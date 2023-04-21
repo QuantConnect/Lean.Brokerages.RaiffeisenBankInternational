@@ -69,7 +69,7 @@ namespace QuantConnect.RBI
 
             _fixBrokerageController.ExecutionReport += OnExecutionReport;
             
-            var fixProtocolDirector = new FixMessageHandler(_fixBrokerageController, securityProvider, symbolMapper );
+            var fixProtocolDirector = new FixMessageHandler(_fixBrokerageController, securityProvider, symbolMapper, config.Account);
             _fixInstance = new FixInstance(fixProtocolDirector, config, logFixMessages);
             
             //ValidateSubscription();
@@ -205,14 +205,6 @@ namespace QuantConnect.RBI
                 {
                     orderEvent.Message += " - " + remainingQuantity + " shares remaining";
                 }
-            }
-
-            if (report.OrdStatus.getValue() == QuickFix.Fields.OrdStatus.DONE_FOR_DAY)
-            { 
-                var filledQuantity = report.LastShares.getValue();
-
-                orderEvent.FillQuantity = filledQuantity * (order.Direction == OrderDirection.Buy ? 1 : -1);
-                orderEvent.FillPrice = report.LastPx.getValue();
             }
 
             OnOrderEvent(orderEvent);
