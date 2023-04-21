@@ -14,9 +14,9 @@
 */
 
 using QuantConnect.RBI.Fix.Core.Interfaces;
-using QuantConnect.Securities;
 using QuantConnect.Util;
 using QuickFix;
+using QuickFix.Fields;
 using QuickFix.FIX42;
 using QuickFix.Transport;
 using Log = QuantConnect.Logging.Log;
@@ -30,6 +30,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     private readonly FixConfiguration _config;
     private SocketInitiator _initiator;
     private readonly LogFactory.LogFactory _logFactory;
+    private readonly OnBehalfOfCompID _onBehalfOfCompID;
 
     private bool _isDisposed;
 
@@ -38,6 +39,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
         _messageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
         _config = config;
         _logFactory = new LogFactory.LogFactory(logFixMesssages);
+        _onBehalfOfCompID = new OnBehalfOfCompID(config.OnBehalfOfCompID);
     }
     
     public bool IsConnected()
@@ -70,6 +72,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     /// <param name="sessionID">SessionID</param>
     public void ToAdmin(Message message, SessionID sessionID)
     {
+        message.Header.SetField(_onBehalfOfCompID);
         _messageHandler.EnrichMessage(message);
     }
 
@@ -90,7 +93,9 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     /// <param name="message">Message</param>
     /// <param name="sessionID">SessionID</param>
     public void ToApp(Message message, SessionID sessionID)
-    { }
+    {
+        message.Header.SetField(_onBehalfOfCompID);
+    }
 
     /// <summary>
     /// Every inbound application level message will pass through this method, such as orders, executions, security definitions, and market data

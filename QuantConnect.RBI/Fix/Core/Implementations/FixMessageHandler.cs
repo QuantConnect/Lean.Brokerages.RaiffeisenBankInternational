@@ -34,6 +34,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
     private readonly IFixBrokerageController _brokerageController;
     private readonly ISecurityProvider _securityProvider;
     private readonly RBISymbolMapper _symbolMapper;
+    private readonly string _account;
     private readonly ConcurrentDictionary<SessionID, IFixSymbolController> _sessionHandlers = new();
 
     public IMessageFactory MessageFactory { get; set; }
@@ -43,11 +44,14 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
     public FixMessageHandler(
         IFixBrokerageController brokerageController,
         ISecurityProvider securityProvider,
-        RBISymbolMapper symbolMapper)
+        RBISymbolMapper symbolMapper,
+        string account
+        )
     {
         _symbolMapper = symbolMapper;
         _securityProvider = securityProvider;
         _brokerageController = brokerageController;
+        _account = account;
     }
 
     public bool IsSessionReady()
@@ -104,7 +108,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
         Log.Trace($"OnLogon(): Adding handler for SessionId {sessionId}");
         var session = new RBIFixConnection(sessionId);
         _sessionHandlers[sessionId] =
-            new FixSymbolController(session, _brokerageController, _securityProvider, _symbolMapper);
+            new FixSymbolController(session, _brokerageController, _securityProvider, _symbolMapper, _account);
         if (_expectedMsgSeqNumLogOn > 0)
         {
             Session.LookupSession(sessionId).NextSenderMsgSeqNum = _expectedMsgSeqNumLogOn;

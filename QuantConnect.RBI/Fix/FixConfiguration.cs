@@ -24,6 +24,10 @@ public class FixConfiguration
     public string TargetCompId { get; set; }
     public string Host { get; set; }
     public string Port { get; set; }
+    
+    public string OnBehalfOfCompID { get; set; }
+    
+    public string Account { get; set; }
 
     public SessionSettings GetDefaultSessionSettings()
     {

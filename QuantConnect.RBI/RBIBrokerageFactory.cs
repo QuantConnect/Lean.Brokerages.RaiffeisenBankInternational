@@ -40,9 +40,12 @@ namespace QuantConnect.RBI
         {
             { "rbi-host", Config.Get("rbi-host") },
             { "rbi-port", Config.Get("rbi-port") },
+            { "rbi-account", Config.Get("rbi-account") },
+            
             { "rbi-sender-comp-id", Config.Get("rbi-sender-comp-id") },
             { "rbi-target-comp-id", Config.Get("rbi-target-comp-id") },
             { "rbi-log-fix-messages", Config.Get("rbi-log-fix-messages") },
+            { "rbi-on-behalf-of-comp-id", Config.Get("rbi-on-behalf-of-comp-id") },
 
             { "live-cash-balance", Config.Get("live-cash-balance")},
             { "live-holdings", Config.Get("live-holdings")},
@@ -78,15 +81,18 @@ namespace QuantConnect.RBI
             {
                 Host = Read<string>(job.BrokerageData, "rbi-host", errors),
                 Port = Read<string>(job.BrokerageData, "rbi-port", errors),
+                Account = Read<string>(job.BrokerageData, "rbi-account", errors),
                 SenderCompId = Read<string>(job.BrokerageData, "rbi-sender-comp-id", errors),
                 TargetCompId = Read<string>(job.BrokerageData, "rbi-target-comp-id", errors),
+                OnBehalfOfCompID = Read<string>(job.BrokerageData, "rbi-on-behalf-of-comp-id", errors)
             };
             
             var logFixMessages = Read<bool>(job.BrokerageData, "rbi-log-fix-messages", new List<string>());
 
             Log.Trace(
-                $"CreateBrokerage(): Host {fixConfig.Host}, Port {fixConfig.Port}," +
-                $" SenderCompId {fixConfig.SenderCompId}, TargetCompId {fixConfig.TargetCompId}");
+                $"CreateBrokerage(): Host {fixConfig.Host}, Port {fixConfig.Port}, Account {fixConfig.Account}" +
+                $" SenderCompId {fixConfig.SenderCompId}, TargetCompId {fixConfig.TargetCompId}," +
+                $" OnBehalfOfCompId {fixConfig.OnBehalfOfCompID}");
 
             if (errors.Count > 0)
             {
