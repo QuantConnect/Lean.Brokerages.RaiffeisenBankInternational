@@ -77,7 +77,7 @@ namespace QuantConnect.RBI
                 OnMessage(new BrokerageMessageEvent(BrokerageMessageType.Error, -1, e.Message));
             };
             
-            // ValidateSubscription();
+            ValidateSubscription();
         }
 
         /// <summary>
