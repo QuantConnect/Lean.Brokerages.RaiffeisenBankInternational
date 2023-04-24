@@ -13,6 +13,7 @@
  * limitations under the License.
 */
 
+using QuantConnect.Configuration;
 using QuickFix;
 
 namespace QuantConnect.RBI.Fix;
@@ -20,6 +21,8 @@ namespace QuantConnect.RBI.Fix;
 public class FixConfiguration
 {
     private const string FixVersionString = "FIX.4.2";
+    private int? _senderSessionId;
+    private readonly int _maxSessionId = Config.GetInt("max-sender-session-id", 15);
     public string SenderCompId { get; set; }
     public string TargetCompId { get; set; }
     public string Host { get; set; }
@@ -48,18 +51,43 @@ public class FixConfiguration
         defaultDic.SetBool("SendLogoutBeforeDisconnectFromTimeout", false);
         defaultDic.SetString("HeartBtInt", "30");
         defaultDic.SetString("LogonTimeout", "5");
+        defaultDic.SetString("SocketConnectHost", Host);
+        defaultDic.SetString("SocketConnectPort", Port);
 
         settings.Set(defaultDic);
 
-        var orderRoutingDic = new Dictionary();
-        orderRoutingDic.SetString("SenderCompID", SenderCompId);
-        orderRoutingDic.SetString("TargetCompID", TargetCompId);
-        orderRoutingDic.SetString("SocketConnectHost", Host);
-        orderRoutingDic.SetString("SocketConnectPort", Port);
 
-        var orderRoutingSessionId = new SessionID(FixVersionString, SenderCompId, TargetCompId);
-        settings.Set(orderRoutingSessionId, orderRoutingDic);
+        var sessionId = GetNewSessionId();
+        settings.Set(sessionId, new Dictionary());
 
         return settings;
+    }
+    
+    private SessionID GetNewSessionId()
+    {
+        var senderCompId = SenderCompId;
+        if (!_senderSessionId.HasValue)
+        {
+            // the first time we try we directly use the plain 'SenderCompId'
+            _senderSessionId = 0;
+        }
+        else
+        {
+            // following calls we add an incremental id, we try to find a free connection point
+            senderCompId += $"-{_senderSessionId}";
+            _senderSessionId++;
+            if(_senderSessionId > _maxSessionId)
+            {
+                Reset();
+            }
+        }
+
+        return new SessionID(FixVersionString, senderCompId, TargetCompId);
+    }
+
+    public void Reset()
+    {
+        // start again the next time
+        _senderSessionId = null;
     }
 }
