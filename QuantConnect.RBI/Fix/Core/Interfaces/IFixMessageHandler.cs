@@ -21,7 +21,7 @@ namespace QuantConnect.RBI.Fix.Core.Interfaces;
 
 public interface IFixMessageHandler
 {
-    bool IsSessionReady();
+    bool AreSessionsReady();
     
     IMessageFactory MessageFactory { get; set; }
 
