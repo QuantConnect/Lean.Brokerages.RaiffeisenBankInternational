@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Product>QuantConnect.RBI</Product>
-    <Assembly>QuantConnect.RBI</Assembly>
+    <AssemblyName>QuantConnect.RBI</AssemblyName>
     <RootNamespace>QuantConnect.RBI</RootNamespace>
     <AssemblyTitle>QuantConnect.RBI</AssemblyTitle>
     <OutputType>Library</OutputType>
