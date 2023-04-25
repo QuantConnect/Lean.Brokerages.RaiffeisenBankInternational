@@ -121,6 +121,11 @@ namespace QuantConnect.RBI
         /// <returns>True if the request for a new order has been placed, false otherwise</returns>
         public override bool PlaceOrder(Order order)
         {
+            if (string.IsNullOrEmpty(order.Symbol.ISIN))
+            {
+                OnMessage(new BrokerageMessageEvent(BrokerageMessageType.Warning, 0, $"Invalid ISIN, failed to place order {order.Id} for symbol {order.Symbol}"));
+                return false;
+            }
             return _fixBrokerageController.PlaceOrder(order);
         }
         
@@ -176,7 +181,7 @@ namespace QuantConnect.RBI
         {
             var orderStatus = Utility.ConvertOrderStatus(report);
 
-            var ordId = orderStatus == OrderStatus.Canceled
+            var ordId = (orderStatus == OrderStatus.Canceled || orderStatus == OrderStatus.UpdateSubmitted)
                 ? report.OrigClOrdID.getValue()
                 : report.ClOrdID.getValue(); // gets OrigClOrdId if status is cancelled, otherwise -> ClOrdID
 
@@ -196,6 +201,19 @@ namespace QuantConnect.RBI
             if (order == null)
             {
                 Log.Error($"RBIBrokerage.OnExecutionReport(): Unable to locate order with BrokerageId: {ordId}");
+                return;
+            }
+
+            if (orderStatus == OrderStatus.CancelPending && order.Status == OrderStatus.CancelPending)
+            {
+                // lean already set's cancel pending status
+                Log.Debug($"RBIBrokerage.OnExecutionReport(): skipping {OrderStatus.CancelPending} event for order id {order.Id}");
+                return;
+            }
+            if (orderStatus == OrderStatus.New)
+            {
+                // brokerage acknoledge our order request, 'PENDING_NEW'. We will get a new event following this one
+                Log.Debug($"RBIBrokerage.OnExecutionReport(): skipping {OrderStatus.New} event for order id {order.Id}");
                 return;
             }
 

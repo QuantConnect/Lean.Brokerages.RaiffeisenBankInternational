@@ -72,8 +72,14 @@ namespace QuantConnect.RBI.Fix.Utils
                 case ExecType.PENDING_NEW:
                     return OrderStatus.New;
 
+                case ExecType.PENDING_CANCEL:
+                    return OrderStatus.CancelPending;
+
+                case ExecType.REJECTED:
+                    return OrderStatus.Invalid;
+
                 default:
-                    Log.Error($"RBI doesn't support this ExecType: {execType}");
+                    Log.Error($"RBIBrokerage(): unsupported ExecType: {execType}");
                     return OrderStatus.Invalid;
             }
         }

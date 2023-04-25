@@ -20,7 +20,6 @@ using QuantConnect.RBI.Fix.Connection.Interfaces;
 using QuantConnect.RBI.Fix.Core.Interfaces;
 using QuantConnect.RBI.Fix.Utils;
 using QuantConnect.Securities;
-using QuantConnect.Securities.Equity;
 using QuickFix.Fields;
 using QuickFix.FIX42;
 
@@ -30,7 +29,6 @@ public class FixSymbolController : IFixSymbolController
 {
     private readonly IRBIFixConnection _session;
     private readonly RBISymbolMapper _symbolMapper;
-    private readonly ISecurityProvider _securityProvider;
     private readonly Account _account;
 
     public FixSymbolController(
@@ -43,7 +41,6 @@ public class FixSymbolController : IFixSymbolController
     {
         _session = session;
         _symbolMapper = mapper;
-        _securityProvider = securityProvider;
         _account = new Account(account);
         brokerageController.Register(this);
     }
@@ -68,8 +65,10 @@ public class FixSymbolController : IFixSymbolController
             IDSource = new IDSource(IDSource.ISIN_NUMBER),
             SecurityID = new SecurityID(order.Symbol.ISIN),
             TimeInForce = Utility.ConvertTimeInForce(order.TimeInForce, order.Type),
-            ExDestination = new ExDestination(GetOrderExchange(order)),
+            // US
+            ExDestination = new ExDestination(order.Symbol.ISIN.Substring(0, 2)),
             Account = _account,
+            Currency = new Currency(order.PriceCurrency)
         };
 
         switch (order.Type)
@@ -98,7 +97,6 @@ public class FixSymbolController : IFixSymbolController
                 Log.Error($"FixSymbolController.PlaceOrder(): RBI doesn't support this OrderType: {nameof(order.Type)}");
                 break;
         }
-        
         order.BrokerId.Add(newOrder.ClOrdID.getValue());
         
         return _session.Send(newOrder);
@@ -108,7 +106,7 @@ public class FixSymbolController : IFixSymbolController
     {
         var ticker = _symbolMapper.GetBrokerageSymbol(order.Symbol);
 
-        return _session.Send(new OrderCancelRequest
+        var request = new OrderCancelRequest
         {
             ClOrdID = new ClOrdID(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)),
             OrigClOrdID = new OrigClOrdID(order.BrokerId[0]),
@@ -116,7 +114,11 @@ public class FixSymbolController : IFixSymbolController
             TransactTime = new TransactTime(DateTime.UtcNow),
             Symbol = new QuickFix.Fields.Symbol(ticker),
             OrderID = new OrderID(order.Id.ToString()),
-        });
+            Account = _account,
+        };
+        order.BrokerId.Add(request.ClOrdID.getValue());
+
+        return _session.Send(request);
     }
 
     public bool UpdateOrder(Order order)
@@ -132,7 +134,9 @@ public class FixSymbolController : IFixSymbolController
             Side = new Side(order.Direction == OrderDirection.Buy ? Side.BUY : Side.SELL),
             Symbol = new QuickFix.Fields.Symbol(ticker),
             HandlInst = new HandlInst(HandlInst.AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION),
-            OrderID = new OrderID(order.Id.ToString())
+            OrderID = new OrderID(order.Id.ToString()),
+            Account = _account,
+            Currency = new Currency(order.PriceCurrency)
         };
 
         switch (order.Type)
@@ -161,30 +165,8 @@ public class FixSymbolController : IFixSymbolController
                 Log.Trace($"RBI doesn't support this Order Type: {nameof(order.Type)}");
                 break;
         }
+        order.BrokerId.Add(request.ClOrdID.getValue());
 
         return _session.Send(request);
-    }
-    
-    private string GetOrderExchange(Order order)
-    {
-        var exchangeDestination = string.Empty;
-        if (order.Properties is OrderProperties orderProperties && orderProperties.Exchange != null)
-        {
-            exchangeDestination = orderProperties.Exchange.ToString();
-        }
-        if (string.IsNullOrEmpty(exchangeDestination) && order.Symbol.SecurityType == SecurityType.Equity)
-        {
-            var equity = _securityProvider.GetSecurity(order.Symbol) as Equity;
-            exchangeDestination = equity?.PrimaryExchange.ToString();
-        }
-
-        var exchangeFromMapper = _symbolMapper.GetBrokerageExchange(exchangeDestination.ToUpper());
-
-        if (!exchangeFromMapper.isSuccessful)
-        {
-            exchangeFromMapper.exchange = "SMART-INCA"; // change
-        }
-
-        return exchangeFromMapper.exchange;
     }
 }

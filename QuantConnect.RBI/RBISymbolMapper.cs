@@ -29,24 +29,6 @@ public class RBISymbolMapper : ISymbolMapper
         { QuickFix.Fields.SecurityType.FUTURE, SecurityType.Future },
         { QuickFix.Fields.SecurityType.OPTION, SecurityType.Option }
     };
-
-    private readonly Dictionary<string, string> _mapLeanExchangeToExchange = new() {
-        { Exchange.AMEX.Name, "AMEX-INCA" },
-        { Exchange.BOSTON.Name, "BOSTON-INCA" },
-        { Exchange.CBOE.Name, "CBOE-INCA" },
-        { Exchange.ARCA.Name, "ARCA-INCA" },
-        { Exchange.BATS.Name, "BATS-INCA" },
-        { Exchange.BATS_Y.Name, "BATSYX-INCA" },
-        { Exchange.EDGA.Name, "EDGA-INCA" },
-        { Exchange.EDGX.Name, "EDGX-INCA" },
-        { Exchange.NASDAQ.Name, "NASDAQ-INCA" },
-        { Exchange.NASDAQ_BX.Name, "NASDAQBX-INCA" },
-        { Exchange.NYSE.Name, "NYSE-INCA" },
-        { Exchange.NASDAQ_PSX.Name, "PHLX-INCA" },
-        { Exchange.SMART, "SMART-INCA" },
-        { Exchange.IEX, "IEX-INCA" },
-        { Exchange.OTCX, "OTCX-INCA" },
-    };
     
     private readonly Dictionary<SecurityType, string> _mapLeanSecurityTypeToSecurityType;
 
@@ -76,11 +58,6 @@ public class RBISymbolMapper : ISymbolMapper
         }
 
         return securityTypeBrokerage;
-    }
-
-    public (bool isSuccessful, string? exchange) GetBrokerageExchange(string leanExchange)
-    {
-        return (_mapLeanExchangeToExchange.TryGetValue(leanExchange, out var exchange), exchange);
     }
     
     private string GetMappedTicker(Symbol symbol)
