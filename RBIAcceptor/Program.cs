@@ -1,3 +1,0 @@
-﻿using RBIAcceptor;
-
-FixPaperBrokerage.Create();
