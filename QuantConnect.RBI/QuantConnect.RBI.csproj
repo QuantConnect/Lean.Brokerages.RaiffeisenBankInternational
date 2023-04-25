@@ -5,9 +5,10 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Product>QuantConnect.RBIBrokerage</Product>
-    <RootNamespace>QuantConnect.RBIBrokerage</RootNamespace>
-    <AssemblyTitle>QuantConnect.RBIBrokerage</AssemblyTitle>
+    <Product>QuantConnect.RBI</Product>
+    <Assembly>QuantConnect.RBI</Assembly>
+    <RootNamespace>QuantConnect.RBI</RootNamespace>
+    <AssemblyTitle>QuantConnect.RBI</AssemblyTitle>
     <OutputType>Library</OutputType>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
