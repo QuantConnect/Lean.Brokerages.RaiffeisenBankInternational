@@ -13,7 +13,6 @@
  * limitations under the License.
 */
 
-using QuantConnect.Util;
 using QuickFix;
 using Log = QuantConnect.Logging.Log;
 
@@ -21,7 +20,6 @@ namespace QuantConnect.RBI.Fix.LogFactory;
 
 public class Logger : ILog
 {
-    private bool _isDisposed;
     private readonly bool _logFixMessages;
 
     public Logger(bool logFixMesssages)
@@ -31,13 +29,6 @@ public class Logger : ILog
 
     public void Dispose()
     {
-        if (_isDisposed)
-        {
-            return;
-        }
-
-        _isDisposed = true;
-        this.DisposeSafely();
     }
 
     public void Clear()
@@ -47,7 +38,7 @@ public class Logger : ILog
     {
         if (_logFixMessages && CheckMessage(msg))
         {
-            Log.Trace($"Incoming: {msg.Replace('\x1', '|')}", true);
+            Log.Trace($"[incoming] {msg.Replace('\x1', '|')}", true);
         }
     }
 
@@ -55,14 +46,15 @@ public class Logger : ILog
     {
         if (_logFixMessages && CheckMessage(msg))
         {
-            Log.Trace($"Outcoming: {msg.Replace('\x1', '|')}", true);
+            Log.Trace($"[outgoing] {msg.Replace('\x1', '|')}", true);
         }
     }
 
     public void OnEvent(string s)
     {
-        if(_logFixMessages) {
-            Log.Trace($"[event] {s.Replace('\x1', '|')}", true);
+        if(_logFixMessages)
+        {
+            Log.Trace($"[   event] {s.Replace('\x1', '|')}", true);
         }
     }
 

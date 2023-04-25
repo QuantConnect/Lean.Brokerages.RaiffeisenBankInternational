@@ -90,9 +90,9 @@ namespace QuantConnect.RBI
             var logFixMessages = Read<bool>(job.BrokerageData, "rbi-log-fix-messages", new List<string>());
 
             Log.Trace(
-                $"CreateBrokerage(): Host {fixConfig.Host}, Port {fixConfig.Port}, Account {fixConfig.Account}" +
+                $"RBIBrokerageFactory.CreateBrokerage(): Host {fixConfig.Host}, Port {fixConfig.Port}, Account {fixConfig.Account}" +
                 $" SenderCompId {fixConfig.SenderCompId}, TargetCompId {fixConfig.TargetCompId}," +
-                $" OnBehalfOfCompId {fixConfig.OnBehalfOfCompID}");
+                $" OnBehalfOfCompId {fixConfig.OnBehalfOfCompID}. LogFixMessages {logFixMessages}");
 
             if (errors.Count > 0)
             {

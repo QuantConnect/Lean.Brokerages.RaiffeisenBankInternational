@@ -14,10 +14,8 @@
 */
 
 using System.Collections.Concurrent;
-using QuantConnect.Logging;
 using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Core.Interfaces;
-using QuantConnect.RBI.Fix.Utils;
 using QuickFix.Fields;
 using QuickFix.FIX42;
 
@@ -27,14 +25,7 @@ public class FixBrokerageController : IFixBrokerageController
 {
     private readonly ConcurrentDictionary<string, ExecutionReport> _executions = new();
     private IFixSymbolController _symbolController;
-    private bool _isControllerRegistered;
 
-    private readonly RBISymbolMapper _symbolMapper;
-
-    public FixBrokerageController(RBISymbolMapper mapper)
-    {
-        _symbolMapper = mapper;
-    }
 
     public event EventHandler<ExecutionReport> ExecutionReport;
 
@@ -47,7 +38,6 @@ public class FixBrokerageController : IFixBrokerageController
         }
 
         _symbolController = controller ?? throw new ArgumentNullException(nameof(controller));
-        _isControllerRegistered = true;
     }
 
     public void Unregister(IFixSymbolController controller)
@@ -64,14 +54,12 @@ public class FixBrokerageController : IFixBrokerageController
         }
 
         _symbolController = null;
-        _isControllerRegistered = false;
     }
 
     public bool PlaceOrder(Order order)
     {
-        if (!_isControllerRegistered)
+        if (_symbolController == null)
         {
-            Log.Error("No controller has been registered, error with LogOn");
             return false;
         }
         
@@ -80,9 +68,8 @@ public class FixBrokerageController : IFixBrokerageController
 
     public bool CancelOrder(Order order)
     {
-        if (!_isControllerRegistered)
+        if (_symbolController == null)
         {
-            Log.Error("No controller has been registered, error with LogOn");
             return false;
         }
         
@@ -91,9 +78,8 @@ public class FixBrokerageController : IFixBrokerageController
 
     public bool UpdateOrder(Order order)
     {
-        if (!_isControllerRegistered)
+        if (_symbolController == null)
         {
-            Log.Error("No controller has been registered, error with LogOn");
             return false;
         }
 
@@ -102,7 +88,7 @@ public class FixBrokerageController : IFixBrokerageController
 
     public List<Order> GetOpenOrders()
     {
-        return _executions.Values.Select(ConvertOrder).Where(o => o.Status.IsOpen()).ToList();
+        throw new NotImplementedException();
     }
     
     public void Receive(ExecutionReport execution)
@@ -119,66 +105,5 @@ public class FixBrokerageController : IFixBrokerageController
         }
 
         ExecutionReport?.Invoke(this, execution);
-    }
-
-    private Order ConvertOrder(ExecutionReport report)
-    {
-        var ticker = report.Symbol.getValue();
-        var securityType = _symbolMapper.GetLeanSecurityType(report.SecurityType.getValue());
-
-        var symbol = _symbolMapper.GetLeanSymbol(ticker, securityType, Market.USA);
-
-        var orderQty = report.OrderQty.getValue();
-        var orderSide = report.Side.getValue();
-
-        if (orderSide == Side.SELL)
-        {
-            orderQty = -orderQty;
-        }
-        var time = report.TransactTime.getValue();
-        var orderType = Utility.ConvertOrderType(report.OrdType.getValue());
-
-        Order order = new MarketOrder(symbol, orderQty, time, report.Price.Obj );
-        
-        switch (orderType)
-        {
-            case OrderType.Market:
-                order = new MarketOrder(symbol, orderQty, time, report.Price.Obj );
-                break;
-
-            case OrderType.Limit:
-            {
-                var limitPrice = report.Price.getValue();
-                order = new LimitOrder(symbol, orderQty, limitPrice, time);
-            }
-                break;
-
-            case OrderType.StopMarket:
-            {
-                var stopPrice = report.StopPx.getValue();
-                order = new LimitOrder(symbol, orderQty, stopPrice, time);
-            }
-                break;
-
-            case OrderType.StopLimit:
-            {
-                var limitPrice = report.Price.getValue();
-                var stopPrice = report.StopPx.getValue();
-                order = new StopLimitOrder(symbol, orderQty, stopPrice, limitPrice, time);
-            }
-                break;
-
-            case OrderType.LimitIfTouched:
-            {
-                var limitPrice = report.Price.getValue();
-                var stopPrice = report.StopPx.getValue();
-                order = new LimitIfTouchedOrder(symbol, orderQty, stopPrice, limitPrice, time);
-            }
-                break;
-        }
-        
-        order.BrokerId.Add(report.ClOrdID.getValue());
-
-        return order;
     }
 }

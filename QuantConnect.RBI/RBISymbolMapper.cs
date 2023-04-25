@@ -43,9 +43,9 @@ public class RBISymbolMapper : ISymbolMapper
         { Exchange.NASDAQ_BX.Name, "NASDAQBX-INCA" },
         { Exchange.NYSE.Name, "NYSE-INCA" },
         { Exchange.NASDAQ_PSX.Name, "PHLX-INCA" },
-        { "SMART", "SMART-INCA" },
-        { "IEX", "IEX-INCA" },
-        { "OTCX", "OTCX-INCA" },
+        { Exchange.SMART, "SMART-INCA" },
+        { Exchange.IEX, "IEX-INCA" },
+        { Exchange.OTCX, "OTCX-INCA" },
     };
     
     private readonly Dictionary<SecurityType, string> _mapLeanSecurityTypeToSecurityType;
@@ -66,16 +66,6 @@ public class RBISymbolMapper : ISymbolMapper
         DateTime expirationDate = default, decimal strike = 0, OptionRight optionRight = OptionRight.Call)
     {
         return Symbol.Create(brokerageSymbol, securityType, market);
-    }
-
-    public SecurityType GetLeanSecurityType(string productType)
-    {
-        if (!_mapSecurityTypeToLeanSecurityType.TryGetValue(productType, out var securityType))
-        {
-            throw new NotSupportedException($"Unsupported RBI ProductType: {productType}");
-        }
-
-        return securityType;
     }
     
     public string GetBrokerageSecurityType(SecurityType leanSecurityType)

@@ -65,8 +65,7 @@ namespace QuantConnect.RBI
 
             var symbolMapper = new RBISymbolMapper(mapFileProvider);
 
-            _fixBrokerageController = new FixBrokerageController(symbolMapper);
-
+            _fixBrokerageController = new FixBrokerageController();
             _fixBrokerageController.ExecutionReport += OnExecutionReport;
             
             var fixProtocolDirector = new FixMessageHandler(_fixBrokerageController, securityProvider, symbolMapper, config.Account);
@@ -94,7 +93,7 @@ namespace QuantConnect.RBI
         /// <returns>The open orders returned from IB</returns>
         public override List<Order> GetOpenOrders()
         {
-            return _fixBrokerageController.GetOpenOrders();
+            return new List<Order>();
         }
         
         /// <summary>
@@ -160,9 +159,14 @@ namespace QuantConnect.RBI
         {
             _fixInstance.Terminate();
         }
-        
+
+        public override void Dispose()
+        {
+            _fixInstance.DisposeSafely();
+        }
+
         #endregion
-        
+
         /// <summary>
         ///  Execution report receiver
         /// </summary>
@@ -176,7 +180,16 @@ namespace QuantConnect.RBI
                 ? report.OrigClOrdID.getValue()
                 : report.ClOrdID.getValue(); // gets OrigClOrdId if status is cancelled, otherwise -> ClOrdID
 
-            var transactTime = report.TransactTime.getValue();
+            DateTime transactTime;
+            try
+            {
+                transactTime = report.TransactTime.getValue();
+            }
+            catch
+            {
+                // not there, happens on rejection
+                transactTime = DateTime.UtcNow;
+            }
 
             var order = _orderProvider.GetOrdersByBrokerageId(ordId).SingleOrDefault();
 
@@ -213,16 +226,6 @@ namespace QuantConnect.RBI
             }
 
             OnOrderEvent(orderEvent);
-        }
-
-        private void OnMessage(ExecutionReport report)
-        {
-            _fixInstance.OnMessage(report);
-        }
-
-        private void OnMessage(OrderCancelReject reject)
-        {
-            _fixInstance.OnMessage(reject);
         }
         
         /// <summary>

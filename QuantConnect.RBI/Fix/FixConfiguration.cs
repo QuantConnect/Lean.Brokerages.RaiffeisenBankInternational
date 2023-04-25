@@ -38,13 +38,13 @@ public class FixConfiguration
 
         var defaultDic = new Dictionary();
         defaultDic.SetString("ConnectionType", "initiator");
-        defaultDic.SetString("ReconnectInterval", "2");
+        defaultDic.SetString("ReconnectInterval", "5");
         defaultDic.SetString("FileStorePath", @"store");
         defaultDic.SetString("FileLogPath", "log");
         defaultDic.SetString("StartTime", "00:00:00");
         defaultDic.SetString("EndTime", "00:00:00");
         defaultDic.SetBool("UseDataDictionary", true);
-        defaultDic.SetString("DataDictionary", @"../../../QuantConnect.RBI/RBI-FIX42.xml");
+        defaultDic.SetString("DataDictionary", @"RBI-FIX42.xml");
         defaultDic.SetString("BeginString", FixVersionString);
         defaultDic.SetString("TimeZone", "UTC");
         defaultDic.SetBool("UseLocalTime", false);

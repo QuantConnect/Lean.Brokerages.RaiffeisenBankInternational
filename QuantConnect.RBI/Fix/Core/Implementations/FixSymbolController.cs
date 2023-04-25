@@ -52,19 +52,21 @@ public class FixSymbolController : IFixSymbolController
     {
         var ticker = _symbolMapper.GetBrokerageSymbol(order.Symbol);
         var side = new Side(order.Direction == OrderDirection.Buy ? Side.BUY : Side.SELL);
-        var securityId =
-            SecurityIdentifier.GenerateEquity(ticker, Market.USA, mappingResolveDate: DateTime.UtcNow);
+        var securityType = new QuickFix.Fields.SecurityType(_symbolMapper.GetBrokerageSecurityType(order.Symbol.SecurityType));
 
+        /// Raiffeisen Centrobank AG identifies instruments using ISIN codes. Therefore IDSource (22) needs to contain the class ISINCode (4)
+        /// and SecurityID (48) needs to contain the ISIN. The field Symbol(55) has to be filled but will not be validated.
         var newOrder = new NewOrderSingle
         {
             ClOrdID = new ClOrdID(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)),
             HandlInst = new HandlInst(HandlInst.AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION),
             Symbol = new QuickFix.Fields.Symbol(ticker),
+            SecurityType = securityType,
             Side = side,
             TransactTime = new TransactTime(DateTime.UtcNow),
             OrderQty = new OrderQty(order.AbsoluteQuantity),
             IDSource = new IDSource(IDSource.ISIN_NUMBER),
-            SecurityID = new SecurityID(securityId.ToString()),
+            SecurityID = new SecurityID(order.Symbol.ISIN),
             TimeInForce = Utility.ConvertTimeInForce(order.TimeInForce, order.Type),
             ExDestination = new ExDestination(GetOrderExchange(order)),
             Account = _account,
@@ -93,7 +95,7 @@ public class FixSymbolController : IFixSymbolController
                 break;
 
             default:
-                Log.Trace($"RBI doesn't support this OrderType: {nameof(order.Type)}");
+                Log.Error($"FixSymbolController.PlaceOrder(): RBI doesn't support this OrderType: {nameof(order.Type)}");
                 break;
         }
         

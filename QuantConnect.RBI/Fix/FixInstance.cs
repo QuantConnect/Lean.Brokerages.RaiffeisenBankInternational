@@ -99,11 +99,11 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     public void Terminate()
     {
         _connected = false;
-        
+        // stop fix connection monitor
+        _cancellationTokenSource.Cancel();
         if (_initiator != null && !_initiator.IsStopped)
         {
             _initiator.Stop();
-            _initiator.DisposeSafely();
         }
     }
 
@@ -146,12 +146,23 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     /// <param name="sessionID"></param>
     public void FromApp(Message message, SessionID sessionID)
     {
-        _messageHandler.Handle(message, sessionID);
+        try
+        {
+            _messageHandler.Handle(message, sessionID);
+        }
+        catch (UnsupportedMessageType e)
+        {
+            Log.Error(e, $"[{sessionID}] Unknown message: {message.GetType().Name}: {message}");
+        }
     }
 
+    /// <summary>
+    /// This method is called whenever a new session is created.
+    /// </summary>
+    /// <param name="sessionID"></param>
     public void OnCreate(SessionID sessionID)
     {
-        Log.Trace($"Session created: {sessionID}");
+        Log.Trace($"FixInstance.Session created: {sessionID}");
     }
 
     /// <summary>
@@ -183,6 +194,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
 
         _isDisposed = true;
         _initiator.DisposeSafely();
+        _cancellationTokenSource.DisposeSafely();
     }
 
     public void OnMessage(ExecutionReport report)
@@ -200,6 +212,8 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
         try
         {
             _config.Reset();
+
+            // while the exchange is open and we are not connected, let's try to connect
             if (!_messageHandler.AreSessionsReady() && IsExchangeOpen(extendedMarketHours: true))
             {
                 var count = 0;
@@ -231,6 +245,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
                 return false;
             }
 
+            // we are already connected or exchange is closed
             return true;
         }
         catch (Exception e)
@@ -238,6 +253,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
             Log.Error(e);
         }
 
+        // something failed
         return false;
     }
 }

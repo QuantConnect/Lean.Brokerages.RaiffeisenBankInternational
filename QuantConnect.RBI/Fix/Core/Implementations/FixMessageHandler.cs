@@ -14,7 +14,6 @@
 */
 
 using System.Collections.Concurrent;
-using System.Text.RegularExpressions;
 using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Connection.Implementations;
 using QuantConnect.RBI.Fix.Core.Interfaces;
@@ -37,9 +36,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
     private readonly string _account;
     private readonly ConcurrentDictionary<SessionID, IFixSymbolController> _sessionHandlers = new();
 
-    public IMessageFactory MessageFactory { get; set; }
-
-    private int _expectedMsgSeqNumLogOn;
+    public IMessageFactory MessageFactory { get; set; } = new MessageFactory();
 
     public FixMessageHandler(
         IFixBrokerageController brokerageController,
@@ -56,8 +53,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
 
     public bool AreSessionsReady()
     {
-        return !_sessionHandlers.IsEmpty && 
-               _sessionHandlers.All(kvp => Session.LookupSession(kvp.Key).IsLoggedOn);
+        return _sessionHandlers.IsEmpty ? false : _sessionHandlers.All(kvp => Session.LookupSession(kvp.Key).IsLoggedOn);
     }
 
     public void Handle(Message message, SessionID sessionId)
@@ -74,10 +70,6 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
     {
         switch (message)
         {
-            case Logout:
-                HandleLogout(message);
-                break;
-            
             case Heartbeat:
                 Log.Trace($"{message.GetType().Name}: {message} heartbeat");
                 break;
@@ -86,47 +78,41 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
 
     public void EnrichMessage(Message message)
     {
-        if (message.IsSetField(MsgType.TAG))
+        switch (message)
         {
-            var msgType = message.GetString(MsgType.TAG);
-
-            if (!msgType.Equals(MsgType.REJECT) && !msgType.Equals(MsgType.BUSINESS_MESSAGE_REJECT))
-            {
-                switch (message)
-                {
-                    case Logon logon:
-                        logon.SetField(new ResetSeqNumFlag(ResetSeqNumFlag.NO));
-                        logon.SetField(new EncryptMethod(EncryptMethod.NONE));
-                        break;
-                }
-            }
+            case Logon logon:
+                logon.SetField(new ResetSeqNumFlag(ResetSeqNumFlag.YES));
+                logon.SetField(new EncryptMethod(EncryptMethod.NONE));
+                break;
         }
     }
 
     public void OnLogon(SessionID sessionId)
     {
-        Log.Trace($"OnLogon(): Adding handler for SessionId {sessionId}");
+        Log.Trace($"FixMessageHandler.OnLogon(): Adding handler for SessionId {sessionId}");
+
         var session = new RBIFixConnection(sessionId);
-        _sessionHandlers[sessionId] =
-            new FixSymbolController(session, _brokerageController, _securityProvider, _symbolMapper, _account);
-        if (_expectedMsgSeqNumLogOn > 0)
-        {
-            Session.LookupSession(sessionId).NextSenderMsgSeqNum = _expectedMsgSeqNumLogOn;
-            _expectedMsgSeqNumLogOn = 0;
-        }
+        _sessionHandlers[sessionId] = new FixSymbolController(session, _brokerageController, _securityProvider, _symbolMapper, _account);
     }
 
     public void OnLogout(SessionID sessionId)
     {
+        Log.Trace($"FixMessageHandler.OnLogout(): Removing handler for SessionId: {sessionId}");
+
         if (_sessionHandlers.TryRemove(sessionId, out var handler))
         {
             _brokerageController.Unregister(handler);
         }
     }
 
+    public void OnMessage(BusinessMessageReject reject, SessionID sessionId)
+    {
+        Log.Error($"FixMessageHandler.OnMessage(BusinessMessageReject): {reject}");
+    }
+
     public void OnMessage(ExecutionReport report, SessionID sessionId)
     {
-        Log.Trace($"OnMessage(ExecutionReport): {report}");
+        Log.Trace($"FixMessageHandler.OnMessage(ExecutionReport): {report}");
 
         var orderId = report.OrderID.getValue();
         var clOrdId = report.ClOrdID.getValue();
@@ -136,15 +122,19 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
 
         if (!clOrdId.IsNullOrEmpty())
         {
-            if (orderStatus == OrderStatus.Invalid)
+            if (orderStatus != OrderStatus.Invalid)
             {
-                Log.Error($"Invalid order status: {report}");
+                Log.Trace($"FixMessageHandler.OnMessage(): ExecutionReport: Id: {orderId}, ClOrdId: {clOrdId}, ExecType: {execType}, OrderStatus: {orderStatus}");
             }
             else
             {
-                Log.Trace($"ExecutionReport: Id = {orderId}, ClOrdId = {clOrdId}, ExecType = {execType}, Status = {orderStatus}");
+                Log.Error($"FixMessageHandler.OnMessage(): ExecutionReport: Id: {orderId}, ClOrdId: {clOrdId}, ExecType: {execType}, OrderStatus: {orderStatus}");
             }
+        }
+        var isStatusRequest = report.IsSetExecTransType() && report.ExecTransType.getValue() == ExecTransType.STATUS;
 
+        if (!isStatusRequest)
+        {
             _brokerageController.Receive(report);
         }
     }
@@ -153,34 +143,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
     {
         var (reason, responseTo, text) = this.MapCancelReject(reject);
 
-        Log.Trace($"OnMessage() : Order cancellation or modifying failed: {reason}, {text}, in response to {responseTo}");
-    }
-
-    private void HandleLogout(Message msg)
-    {
-        if (!msg.IsSetField(Text.TAG))
-        {
-            return;
-        }
-
-        var msgText = msg.GetString(Text.TAG);
-        if (msgText.Contains("expected"))
-        {
-            var expected = Regex.Match(msgText, @"(?<=expected)[[0-9]+]").Value;
-            expected = expected.Remove(0, 1);
-            expected = expected.Remove(expected.Length - 1, 1);
-            
-            int.TryParse(expected, out _expectedMsgSeqNumLogOn);
-        }
-        else if(msgText.Contains("is closed") || msgText.Contains("Received"))
-        {
-            Log.Trace($"Logout, message: {msgText}");
-        }
-        else
-        {
-            msg.SetField(new ResetSeqNumFlag(ResetSeqNumFlag.NO));
-            _expectedMsgSeqNumLogOn = 0;
-        }
+        Log.Error($"FixMessageHandler.OnMessage(): Order cancellation or modifying failed: {reason}, {text}, in response to {responseTo}");
     }
 
     private (string reason, string responseTo, string text) MapCancelReject(OrderCancelReject rejection)
