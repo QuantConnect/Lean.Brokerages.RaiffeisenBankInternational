@@ -14,6 +14,7 @@
 */
 
 using QuantConnect.RBI.Fix.Core.Interfaces;
+using QuantConnect.Securities;
 using QuantConnect.Util;
 using QuickFix;
 using QuickFix.Fields;
@@ -31,8 +32,15 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     private SocketInitiator _initiator;
     private readonly LogFactory.LogFactory _logFactory;
     private readonly OnBehalfOfCompID _onBehalfOfCompID;
+    private readonly SecurityExchangeHours _securityExchangeHours;
+    
+    private readonly ManualResetEvent _loginEvent = new (false);
+    private CancellationTokenSource _cancellationTokenSource;
+    private volatile bool _connected;
 
     private bool _isDisposed;
+
+    public EventHandler<FixError> Error;
 
     public FixInstance(IFixMessageHandler messageHandler, FixConfiguration config, bool logFixMesssages)
     {
@@ -40,25 +48,59 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
         _config = config;
         _logFactory = new LogFactory.LogFactory(logFixMesssages);
         _onBehalfOfCompID = new OnBehalfOfCompID(config.OnBehalfOfCompID);
+        _securityExchangeHours = MarketHoursDatabase.FromDataFolder().GetExchangeHours(Market.USA, null, SecurityType.Equity);
     }
     
     public bool IsConnected()
     {
-        return _initiator.IsLoggedOn && !_isDisposed;
+        return _connected  && !_isDisposed;
+    }
+
+    private bool IsExchangeOpen(bool extendedMarketHours)
+    {
+        return _securityExchangeHours.IsOpen(DateTime.UtcNow.ConvertFromUtc(_securityExchangeHours.TimeZone),
+            extendedMarketHours);
     }
 
     public void Initialize()
     {
-        var settings = _config.GetDefaultSessionSettings();
-        var storeFactory = new FileStoreFactory(settings);
-        _initiator = new SocketInitiator(this, storeFactory, settings, _logFactory,
-            _messageHandler.MessageFactory);
-        _initiator.Start();
+        _cancellationTokenSource = new CancellationTokenSource();
+        _connected = TryConnect();
+        Task.Factory.StartNew(() =>
+        {
+            Log.Trace("FixInstance(): starting fix connection...");
+            var retry = 0;
+            var timeoutLoop = TimeSpan.FromMinutes(1);
+            while (!_cancellationTokenSource.Token.IsCancellationRequested)
+            {
+                if (_cancellationTokenSource.Token.WaitHandle.WaitOne(timeoutLoop))
+                {
+                    // exit time
+                    break;
+                }
+                if (!TryConnect())
+                {
+                    Log.Error($"FixInstance(): connection failed");
+                    if (++retry >= 5)
+                    {
+                        // after retrying to connect for X times & exchange is open we should die
+                        Error?.Invoke(this, new FixError { Message = "Fix connection failed" });
+                    }
+                }
+                else
+                {
+                    retry = 0;
+                }
+            }
+            Log.Trace($"FixInstance(): ending connection monitor");
+        });
     }
 
     public void Terminate()
     {
-        if (!_initiator.IsStopped)
+        _connected = false;
+        
+        if (_initiator != null && !_initiator.IsStopped)
         {
             _initiator.Stop();
             _initiator.DisposeSafely();
@@ -119,6 +161,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     public void OnLogout(SessionID sessionID)
     {
         _messageHandler.OnLogout(sessionID);
+        _loginEvent.Set();
     }
 
     /// <summary>
@@ -128,6 +171,7 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     public void OnLogon(SessionID sessionID)
     {
         _messageHandler.OnLogon(sessionID);
+        _loginEvent.Set();
     }
 
     public void Dispose()
@@ -149,5 +193,51 @@ public class FixInstance : MessageCracker, IApplication, IDisposable
     public void OnMessage(OrderCancelReject reject)
     {
         _messageHandler.OnMessage(reject, null);
+    }
+
+    private bool TryConnect()
+    {
+        try
+        {
+            _config.Reset();
+            if (!_messageHandler.AreSessionsReady() && IsExchangeOpen(extendedMarketHours: true))
+            {
+                var count = 0;
+                do
+                {
+                    _initiator.DisposeSafely();
+                    _loginEvent.Reset();
+                    var settings = _config.GetDefaultSessionSettings();
+                    var sessionId = settings.GetSessions().Single();
+                    
+                    Log.Trace($"FixInstance.TryConnect({sessionId}): start...");
+
+                    var storeFactory = new FileStoreFactory(settings);
+                    _initiator = new SocketInitiator(this, storeFactory, settings, _logFactory,
+                        _messageHandler.MessageFactory);
+                    _initiator.Start();
+
+                    if (!_loginEvent.WaitOne(TimeSpan.FromSeconds(10), _cancellationTokenSource.Token))
+                    {
+                        Log.Error($"FixInstance.TryConnect({sessionId}): Timeout initializing FIX session.");
+                    }
+                    else if (_messageHandler.AreSessionsReady())
+                    {
+                        Log.Trace($"FixInstance.TryConnect({sessionId}): Connected FIX session.");
+                        return true;
+                    }
+                } while (!_cancellationTokenSource.IsCancellationRequested && ++count <= 15);
+
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            Log.Error(e);
+        }
+
+        return false;
     }
 }

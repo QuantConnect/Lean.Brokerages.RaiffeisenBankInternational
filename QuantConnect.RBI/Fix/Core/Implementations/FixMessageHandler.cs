@@ -54,7 +54,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
         _account = account;
     }
 
-    public bool IsSessionReady()
+    public bool AreSessionsReady()
     {
         return !_sessionHandlers.IsEmpty && 
                _sessionHandlers.All(kvp => Session.LookupSession(kvp.Key).IsLoggedOn);

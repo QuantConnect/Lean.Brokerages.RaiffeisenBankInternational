@@ -71,8 +71,13 @@ namespace QuantConnect.RBI
             
             var fixProtocolDirector = new FixMessageHandler(_fixBrokerageController, securityProvider, symbolMapper, config.Account);
             _fixInstance = new FixInstance(fixProtocolDirector, config, logFixMessages);
+
+            _fixInstance.Error += (object? sender, FixError e) =>
+            {
+                OnMessage(new BrokerageMessageEvent(BrokerageMessageType.Error, -1, e.Message));
+            };
             
-            //ValidateSubscription();
+            ValidateSubscription();
         }
 
         /// <summary>
@@ -227,7 +232,7 @@ namespace QuantConnect.RBI
         {
             try
             {
-                var productId = Config.GetInt("rbi-product-id");
+                var productId = 297;
                 var userId = Config.GetInt("job-user-id");
                 var token = Config.Get("api-access-token");
                 var organizationId = Config.Get("job-organization-id", null);

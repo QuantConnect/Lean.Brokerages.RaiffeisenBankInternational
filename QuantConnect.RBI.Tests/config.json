@@ -8,6 +8,6 @@
   "rbi-sender-comp-id": "",
   "rbi-target-comp-id": "",
   "rbi-on-behalf-of-comp-id": "",
-  "rbi-log-fix-messages": false,
-  "rbi-product-id": 221
+  "max-sender-session-id": 15,
+  "rbi-log-fix-messages": false
 }
