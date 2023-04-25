@@ -13,23 +13,29 @@
  * limitations under the License.
 */
 
-using NUnit.Framework;
+using QuantConnect.RBI.Fix.Connection.Interfaces;
+using QuickFix;
 
-namespace QuantConnect.TemplateBrokerage.Tests
+namespace QuantConnect.RBI.Fix.Connection.Implementations;
+
+public class RBIFixConnection : IRBIFixConnection
 {
-    [TestFixture, Ignore("Not implemented")]
-    public class TemplateBrokerageSymbolMapperTests
+    private readonly Session _session;
+
+    public RBIFixConnection(SessionID sessionId)
     {
-        [Test]
-        public void ReturnsCorrectLeanSymbol()
+        if (sessionId != null)
         {
-
+            _session = Session.LookupSession(sessionId);
         }
-
-        [Test]
-        public void ReturnsCorrectBrokerageSymbol()
+        else
         {
-
+            throw new ArgumentNullException(nameof(sessionId));
         }
+    }
+
+    public bool Send(Message message)
+    {
+        return _session.Send(message);
     }
 }

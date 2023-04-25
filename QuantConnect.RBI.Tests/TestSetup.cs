@@ -19,8 +19,9 @@ using NUnit.Framework;
 using System.Collections;
 using QuantConnect.Logging;
 using QuantConnect.Configuration;
+using QuantConnect.Tests;
 
-namespace QuantConnect.TemplateBrokerage.Tests
+namespace QuantConnect.RBI.Tests
 {
     [TestFixture]
     public class TestSetup
@@ -63,6 +64,8 @@ namespace QuantConnect.TemplateBrokerage.Tests
             Log.LogHandler = new CompositeLogHandler();
             Log.Trace("TestSetup(): starting...");
             ReloadConfiguration();
+            
+            TestGlobals.Initialize();
         }
 
         private static TestCaseData[] TestParameters

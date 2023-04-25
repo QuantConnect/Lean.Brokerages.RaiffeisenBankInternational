@@ -13,20 +13,11 @@
  * limitations under the License.
 */
 
-using NUnit.Framework;
-using QuantConnect.Util;
-using QuantConnect.Interfaces;
+using QuickFix;
 
-namespace QuantConnect.TemplateBrokerage.Tests
+namespace QuantConnect.RBI.Fix.Connection.Interfaces;
+
+public interface IRBIFixConnection
 {
-    [TestFixture]
-    public class TemplateBrokerageAdditionalTests
-    {
-        [Test]
-        public void ParameterlessConstructorComposerUsage()
-        {
-            var brokerage = Composer.Instance.GetExportedValueByTypeName<IDataQueueHandler>("TemplateBrokerage");
-            Assert.IsNotNull(brokerage);
-        }
-    }
+    bool Send(Message message);
 }

@@ -13,20 +13,15 @@
  * limitations under the License.
 */
 
-using NUnit.Framework;
-using QuantConnect.Interfaces;
-using QuantConnect.Util;
+using QuantConnect.Orders;
 
-namespace QuantConnect.TemplateBrokerage.Tests
+namespace QuantConnect.RBI.Fix.Core.Interfaces;
+
+public interface IFixSymbolController
 {
-    [TestFixture, Ignore("This test requires a configured TemplateBrokerageFactory")]
-    public class TemplateBrokerageFactoryTests
-    {
-        [Test]
-        public void InitializesFactoryFromComposer()
-        {
-            using var factory = Composer.Instance.Single<IBrokerageFactory>(instance => instance.BrokerageType == typeof(TemplateBrokerage));
-            Assert.IsNotNull(factory);
-        }
-    }
+    bool PlaceOrder(Order order);
+
+    bool CancelOrder(Order order);
+
+    bool UpdateOrder(Order order);
 }

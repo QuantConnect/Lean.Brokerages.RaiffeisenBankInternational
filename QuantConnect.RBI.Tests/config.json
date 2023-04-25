@@ -1,0 +1,13 @@
+{
+  "data-folder": "../../../../Lean/Data/",
+  "data-directory": "../../../../Lean/Data/",
+  
+  "rbi-host": "",
+  "rbi-port": "",
+  "rbi-account": "",
+  "rbi-sender-comp-id": "",
+  "rbi-target-comp-id": "",
+  "rbi-on-behalf-of-comp-id": "",
+  "max-sender-session-id": 15,
+  "rbi-log-fix-messages": false
+}
