@@ -68,7 +68,7 @@ namespace QuantConnect.RBI
             _fixBrokerageController = new FixBrokerageController();
             _fixBrokerageController.ExecutionReport += OnExecutionReport;
             
-            var fixProtocolDirector = new FixMessageHandler(_fixBrokerageController, securityProvider, symbolMapper, config.Account);
+            var fixProtocolDirector = new FixMessageHandler(_fixBrokerageController, securityProvider, symbolMapper, config.Account, config.OnBehalfOfCompID);
             _fixInstance = new FixInstance(fixProtocolDirector, config, logFixMessages);
 
             _fixInstance.Error += (object? sender, FixError e) =>
