@@ -30,19 +30,22 @@ public class FixSymbolController : IFixSymbolController
     private readonly IRBIFixConnection _session;
     private readonly RBISymbolMapper _symbolMapper;
     private readonly Account _account;
+    private readonly ClientID _clientID;
 
     public FixSymbolController(
         IRBIFixConnection session,
         IFixBrokerageController brokerageController,
         ISecurityProvider securityProvider,
         RBISymbolMapper mapper,
-        string account
+        string account,
+        string onBehalfOfCompID
         )
     {
         _session = session;
         _symbolMapper = mapper;
         _account = new Account(account);
         brokerageController.Register(this);
+        _clientID = new ClientID(onBehalfOfCompID);
     }
 
     public bool PlaceOrder(Order order)
@@ -68,7 +71,8 @@ public class FixSymbolController : IFixSymbolController
             // US
             ExDestination = new ExDestination(order.Symbol.ISIN.Substring(0, 2)),
             Account = _account,
-            Currency = new Currency(order.PriceCurrency)
+            Currency = new Currency(order.PriceCurrency),
+            ClientID = _clientID
         };
 
         switch (order.Type)
@@ -115,6 +119,7 @@ public class FixSymbolController : IFixSymbolController
             Symbol = new QuickFix.Fields.Symbol(ticker),
             OrderID = new OrderID(order.Id.ToString()),
             Account = _account,
+            ClientID = _clientID
         };
         order.BrokerId.Add(request.ClOrdID.getValue());
 
@@ -136,7 +141,8 @@ public class FixSymbolController : IFixSymbolController
             HandlInst = new HandlInst(HandlInst.AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION),
             OrderID = new OrderID(order.Id.ToString()),
             Account = _account,
-            Currency = new Currency(order.PriceCurrency)
+            Currency = new Currency(order.PriceCurrency),
+            ClientID = _clientID
         };
 
         switch (order.Type)
