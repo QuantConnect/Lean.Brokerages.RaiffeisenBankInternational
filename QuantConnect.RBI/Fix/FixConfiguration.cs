@@ -44,6 +44,7 @@ public class FixConfiguration
         defaultDic.SetString("StartTime", "00:00:00");
         defaultDic.SetString("EndTime", "00:00:00");
         defaultDic.SetBool("UseDataDictionary", true);
+        defaultDic.SetBool("AllowUnknownMsgFields", true);
         defaultDic.SetString("DataDictionary", @"RBI-FIX42.xml");
         defaultDic.SetString("BeginString", FixVersionString);
         defaultDic.SetString("TimeZone", "UTC");
