@@ -35,6 +35,7 @@ using QuantConnect.Util;
 using QuickFix.FIX42;
 using RestSharp;
 using Log = QuantConnect.Logging.Log;
+using QuickFix.Fields;
 
 namespace QuantConnect.RBI
 {
@@ -181,9 +182,21 @@ namespace QuantConnect.RBI
         {
             var orderStatus = Utility.ConvertOrderStatus(report);
 
-            var ordId = (orderStatus == OrderStatus.Canceled || orderStatus == OrderStatus.UpdateSubmitted)
-                ? report.OrigClOrdID.getValue()
-                : report.ClOrdID.getValue(); // gets OrigClOrdId if status is cancelled, otherwise -> ClOrdID
+            string ordId;
+            if (orderStatus == OrderStatus.UpdateSubmitted)
+            {
+                // order amendmends
+                ordId = report.OrigClOrdID.getValue();
+            }
+            else if (orderStatus == OrderStatus.Canceled && report.IsSetField(OrigClOrdID.TAG))
+            {
+                // our cancelations use tag 41, unsolicited cancellation use ClOrdID
+                ordId = report.OrigClOrdID.getValue();
+            }
+            else
+            {
+                ordId = report.ClOrdID.getValue();
+            }
 
             DateTime transactTime;
             try
