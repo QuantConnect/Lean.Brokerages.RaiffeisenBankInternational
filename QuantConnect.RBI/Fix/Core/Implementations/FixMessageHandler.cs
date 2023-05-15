@@ -144,42 +144,6 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
 
     public void OnMessage(OrderCancelReject reject, SessionID sessionId)
     {
-        var (reason, responseTo, text) = this.MapCancelReject(reject);
-
-        Log.Error($"FixMessageHandler.OnMessage(): Order cancellation or modifying failed: {reason}, {text}, in response to {responseTo}");
-    }
-
-    private (string reason, string responseTo, string text) MapCancelReject(OrderCancelReject rejection)
-    {
-        try
-        {
-            var reason = rejection.CxlRejReason.getValue() switch
-            {
-                CxlRejReason.TOO_LATE_TO_CANCEL => "Too late to cancel",
-                CxlRejReason.UNKNOWN_ORDER => "Unknown order",
-                CxlRejReason.BROKER_OPTION => "Broker option",
-                CxlRejReason.ORDER_ALREADY_IN_PENDING_CANCEL_OR_PENDING_REPLACE_STATUS =>
-                    "Order already in Pending Cancel or Pending Replace status",
-                _ => string.Empty
-            };
-
-            var responseTo = rejection.CxlRejResponseTo.getValue() switch
-            {
-                CxlRejResponseTo.ORDER_CANCEL_REQUEST => "Order cancel request",
-                CxlRejResponseTo.ORDER_CANCEL_REPLACE_REQUEST => "Order cancel replace request",
-                _ => string.Empty
-            };
-
-            var text = rejection.Text.getValue();
-
-            return (reason, responseTo, text);
-        }
-
-        catch (Exception e)
-        {
-            Log.Trace($"Unexpected error {e.Message}");
-            
-            return (string.Empty, string.Empty, string.Empty);
-        }
+        _brokerageController.Receive(reject);
     }
 }

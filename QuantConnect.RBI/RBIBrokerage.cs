@@ -68,6 +68,7 @@ namespace QuantConnect.RBI
 
             _fixBrokerageController = new FixBrokerageController();
             _fixBrokerageController.ExecutionReport += OnExecutionReport;
+            _fixBrokerageController.CancelReject += OnCancelReject;
             
             var fixProtocolDirector = new FixMessageHandler(_fixBrokerageController, securityProvider, symbolMapper, config.Account, config.OnBehalfOfCompID);
             _fixInstance = new FixInstance(fixProtocolDirector, config, logFixMessages);
@@ -257,6 +258,55 @@ namespace QuantConnect.RBI
             }
 
             OnOrderEvent(orderEvent);
+        }
+
+        private void OnCancelReject(object sender, OrderCancelReject rejection)
+        {
+            try
+            {
+                var orderId = rejection.IsSetField(ClOrdID.TAG) ? rejection.ClOrdID.getValue() : rejection.OrigClOrdID.getValue();
+                var order = _orderProvider.GetOrdersByBrokerageId(orderId).SingleOrDefault();
+
+                if (order == null)
+                {
+                    Log.Error($"RBIBrokerage.OnCancelReject(): Unable to locate order with BrokerageId: {orderId}");
+                    return;
+                }
+
+                var reason = rejection.CxlRejReason.getValue() switch
+                {
+                    CxlRejReason.TOO_LATE_TO_CANCEL => "Too late to cancel",
+                    CxlRejReason.UNKNOWN_ORDER => "Unknown order",
+                    CxlRejReason.BROKER_OPTION => "Broker option",
+                    CxlRejReason.ORDER_ALREADY_IN_PENDING_CANCEL_OR_PENDING_REPLACE_STATUS =>
+                        "Order already in Pending Cancel or Pending Replace status",
+                    _ => string.Empty
+                };
+
+                var responseTo = rejection.CxlRejResponseTo.getValue() switch
+                {
+                    CxlRejResponseTo.ORDER_CANCEL_REQUEST => "Order cancel request",
+                    CxlRejResponseTo.ORDER_CANCEL_REPLACE_REQUEST => "Order cancel replace request",
+                    _ => string.Empty
+                };
+
+                var text = string.Empty;
+                if (rejection.IsSetField(Text.TAG))
+                {
+                    text = rejection.Text.getValue();
+                    if (!string.IsNullOrEmpty(text))
+                    {
+                        text = $", {text}";
+                    }
+                }
+
+                var message = $"Order cancellation failed: {reason}{text}, in response to {responseTo}. OrderID: {order.Id}";
+                OnMessage(new BrokerageMessageEvent(BrokerageMessageType.Warning, 0, message));
+            }
+            catch (Exception e)
+            {
+                Log.Trace($"RBIBrokerage.OnCancelReject(): Unexpected error {e.Message}");
+            }
         }
         
         /// <summary>
