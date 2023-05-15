@@ -146,7 +146,7 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
     {
         var (reason, responseTo, text) = this.MapCancelReject(reject);
 
-        Log.Error($"FixMessageHandler.OnMessage(): Order cancellation or modifying failed: {reason}, {text}, in response to {responseTo}");
+        _brokerageController.Message($"Order cancellation failed: {reason}, {text}, in response to {responseTo}", Brokerages.BrokerageMessageType.Warning);
     }
 
     private (string reason, string responseTo, string text) MapCancelReject(OrderCancelReject rejection)
@@ -170,7 +170,11 @@ public class FixMessageHandler : MessageCracker, IFixMessageHandler
                 _ => string.Empty
             };
 
-            var text = rejection.Text.getValue();
+            var text = string.Empty;
+            if(rejection.IsSetField(Text.TAG))
+            {
+                text = rejection.Text.getValue();
+            }
 
             return (reason, responseTo, text);
         }

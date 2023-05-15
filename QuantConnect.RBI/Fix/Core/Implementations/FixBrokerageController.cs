@@ -14,6 +14,7 @@
 */
 
 using System.Collections.Concurrent;
+using QuantConnect.Brokerages;
 using QuantConnect.Orders;
 using QuantConnect.RBI.Fix.Core.Interfaces;
 using QuickFix.Fields;
@@ -26,6 +27,7 @@ public class FixBrokerageController : IFixBrokerageController
     private readonly ConcurrentDictionary<string, ExecutionReport> _executions = new();
     private IFixSymbolController _symbolController;
 
+    public event EventHandler<BrokerageMessageEvent> MessageEvent;
 
     public event EventHandler<ExecutionReport> ExecutionReport;
 
@@ -105,5 +107,10 @@ public class FixBrokerageController : IFixBrokerageController
         }
 
         ExecutionReport?.Invoke(this, execution);
+    }
+
+    public void Message(string message, BrokerageMessageType messageType)
+    {
+        MessageEvent?.Invoke(this, new BrokerageMessageEvent(messageType, 0, message));
     }
 }
