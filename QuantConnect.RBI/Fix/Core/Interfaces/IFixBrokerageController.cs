@@ -13,15 +13,17 @@
  * limitations under the License.
 */
 
-using QuantConnect.Orders;
 using QuickFix.FIX42;
+using QuantConnect.Orders;
 
 namespace QuantConnect.RBI.Fix.Core.Interfaces;
 
 public interface IFixBrokerageController
 {
     event EventHandler<ExecutionReport> ExecutionReport;
-    
+
+    event EventHandler<OrderCancelReject> CancelReject;
+
     void Register(IFixSymbolController controller);
 
     void Unregister(IFixSymbolController controller);
@@ -35,4 +37,6 @@ public interface IFixBrokerageController
     public List<Order> GetOpenOrders();
 
     void Receive(ExecutionReport report);
+
+    void Receive(OrderCancelReject reject);
 }

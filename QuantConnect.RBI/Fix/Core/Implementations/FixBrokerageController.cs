@@ -26,6 +26,7 @@ public class FixBrokerageController : IFixBrokerageController
     private readonly ConcurrentDictionary<string, ExecutionReport> _executions = new();
     private IFixSymbolController _symbolController;
 
+    public event EventHandler<OrderCancelReject> CancelReject;
 
     public event EventHandler<ExecutionReport> ExecutionReport;
 
@@ -105,5 +106,10 @@ public class FixBrokerageController : IFixBrokerageController
         }
 
         ExecutionReport?.Invoke(this, execution);
+    }
+
+    public void Receive(OrderCancelReject cancelReject)
+    {
+        CancelReject?.Invoke(this, cancelReject);
     }
 }
