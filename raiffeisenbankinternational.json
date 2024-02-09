@@ -1,0 +1,17 @@
+{
+	"description": "Raiffeisen Bank International(RBI) offers trading access for clients based in eastern European countries. QuantConnect connects with RBI through a secure socket FIX connection. The connection is a low latency and sufficient for prop desks, professional traders, and quants.",
+	
+	"platforms-features": [
+		{
+			"Platforms": ["Cloud Platform", "Local Platform", "LEAN CLI"],
+			"Download Data": [0,0,0],
+			"Backtesting": [1,0,0],
+			"Optimization": [1,0,0],
+			"Live Trading":	[1,1,1]
+		}
+	],
+	"order-types": [ "Market", "Limit", "Stop Limit" ],
+	"assets": [ "Equity" ], 
+	"brokerage-url": "https://www.rbinternational.com/",
+	"documentation": "/docs/v2/cloud-platform/live-trading/brokerages/fix-connections"
+}
