@@ -48,7 +48,7 @@ namespace QuantConnect.RBI
         private readonly IOrderProvider _orderProvider;
         private readonly IAlgorithm _algorithm;
         private readonly LiveNodePacket _job;
-        
+
         private const string _orderEventMessage = "RBI OnOrderEvent";
 
         public RBIBrokerage(
@@ -69,7 +69,7 @@ namespace QuantConnect.RBI
             _fixBrokerageController = new FixBrokerageController();
             _fixBrokerageController.ExecutionReport += OnExecutionReport;
             _fixBrokerageController.CancelReject += OnCancelReject;
-            
+
             var fixProtocolDirector = new FixMessageHandler(_fixBrokerageController, securityProvider, symbolMapper, config.Account, config.OnBehalfOfCompID);
             _fixInstance = new FixInstance(fixProtocolDirector, config, logFixMessages);
 
@@ -77,7 +77,7 @@ namespace QuantConnect.RBI
             {
                 OnMessage(new BrokerageMessageEvent(BrokerageMessageType.Error, -1, e.Message));
             };
-            
+
             ValidateSubscription();
         }
 
@@ -87,7 +87,7 @@ namespace QuantConnect.RBI
         public override bool IsConnected => _fixInstance.IsConnected();
 
         #region Brokerage
-        
+
         /// <summary>
         /// Gets all open orders on the account.
         /// NOTE: The order objects returned do not have QC order IDs.
@@ -97,7 +97,7 @@ namespace QuantConnect.RBI
         {
             return new List<Order>();
         }
-        
+
         /// <summary>
         /// Gets all holdings for the account
         /// </summary>
@@ -106,7 +106,7 @@ namespace QuantConnect.RBI
         {
             return GetAccountHoldings(_job.BrokerageData, _algorithm.Securities.Values);
         }
-        
+
         /// <summary>
         /// Gets the current cash balance for each currency held in the brokerage account
         /// </summary>
@@ -115,7 +115,7 @@ namespace QuantConnect.RBI
         {
             return GetCashBalance(_job.BrokerageData, _algorithm.Portfolio.CashBook);
         }
-        
+
         /// <summary>
         /// Places a new order and assigns a new broker ID to the order
         /// </summary>
@@ -130,7 +130,7 @@ namespace QuantConnect.RBI
             }
             return _fixBrokerageController.PlaceOrder(order);
         }
-        
+
         /// <summary>
         /// Updates the order with the same id
         /// </summary>
@@ -140,7 +140,7 @@ namespace QuantConnect.RBI
         {
             return _fixBrokerageController.UpdateOrder(order);
         }
-        
+
         /// <summary>
         /// Cancels the order with the specified ID
         /// </summary>
@@ -150,7 +150,7 @@ namespace QuantConnect.RBI
         {
             return _fixBrokerageController.CancelOrder(order);
         }
-        
+
         /// <summary>
         /// Connects the client to the broker's remote servers
         /// </summary>
@@ -308,7 +308,7 @@ namespace QuantConnect.RBI
                 Log.Trace($"RBIBrokerage.OnCancelReject(): Unexpected error {e.Message}");
             }
         }
-        
+
         /// <summary>
         /// Validate the user of this project has permission to be using it via our web API.
         /// </summary>
@@ -316,10 +316,10 @@ namespace QuantConnect.RBI
         {
             try
             {
-                var productId = 297;
-                var userId = Config.GetInt("job-user-id");
-                var token = Config.Get("api-access-token");
-                var organizationId = Config.Get("job-organization-id", null);
+                const int productId = 297;
+                var userId = Globals.UserId;
+                var token = Globals.UserToken;
+                var organizationId = Globals.OrganizationID;
                 // Verify we can authenticate with this user and token
                 var api = new ApiConnection(userId, token);
                 if (!api.Connected)
@@ -438,7 +438,7 @@ namespace QuantConnect.RBI
                 Environment.Exit(1);
             }
         }
-        
+
         private class ModulesReadLicenseRead : Api.RestResponse
         {
             [JsonProperty(PropertyName = "license")]
