@@ -13,11 +13,10 @@
  * limitations under the License.
 */
 
-using QuantConnect.Brokerages;
 using QuantConnect.Data.Auxiliary;
 using QuantConnect.Interfaces;
 
-namespace QuantConnect.RBI;
+namespace QuantConnect.Brokerages.RBI;
 
 public class RBISymbolMapper : ISymbolMapper
 {

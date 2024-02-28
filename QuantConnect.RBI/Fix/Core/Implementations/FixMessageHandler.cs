@@ -15,9 +15,9 @@
 
 using System.Collections.Concurrent;
 using QuantConnect.Orders;
-using QuantConnect.RBI.Fix.Connection.Implementations;
-using QuantConnect.RBI.Fix.Core.Interfaces;
-using QuantConnect.RBI.Fix.Utils;
+using QuantConnect.Brokerages.RBI.Fix.Connection.Implementations;
+using QuantConnect.Brokerages.RBI.Fix.Core.Interfaces;
+using QuantConnect.Brokerages.RBI.Fix.Utils;
 using QuantConnect.Securities;
 using QuantConnect.Util;
 using QuickFix;
@@ -26,7 +26,7 @@ using QuickFix.FIX42;
 using Log = QuantConnect.Logging.Log;
 using Message = QuickFix.Message;
 
-namespace QuantConnect.RBI.Fix.Core.Implementations;
+namespace QuantConnect.Brokerages.RBI.Fix.Core.Implementations;
 
 public class FixMessageHandler : MessageCracker, IFixMessageHandler
 {

@@ -15,11 +15,11 @@
 
 using System.Collections.Concurrent;
 using QuantConnect.Orders;
-using QuantConnect.RBI.Fix.Core.Interfaces;
+using QuantConnect.Brokerages.RBI.Fix.Core.Interfaces;
 using QuickFix.Fields;
 using QuickFix.FIX42;
 
-namespace QuantConnect.RBI.Fix.Core.Implementations;
+namespace QuantConnect.Brokerages.RBI.Fix.Core.Implementations;
 
 public class FixBrokerageController : IFixBrokerageController
 {

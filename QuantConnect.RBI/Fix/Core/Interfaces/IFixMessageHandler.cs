@@ -17,7 +17,7 @@ using QuickFix;
 using QuickFix.FIX42;
 using Message = QuickFix.Message;
 
-namespace QuantConnect.RBI.Fix.Core.Interfaces;
+namespace QuantConnect.Brokerages.RBI.Fix.Core.Interfaces;
 
 public interface IFixMessageHandler
 {

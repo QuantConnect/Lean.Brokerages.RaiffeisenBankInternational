@@ -17,7 +17,7 @@ using NUnit.Framework;
 using QuantConnect.Interfaces;
 using QuantConnect.Util;
 
-namespace QuantConnect.RBI.Tests
+namespace QuantConnect.Brokerages.RBI.Tests
 {
     [TestFixture]
     public class RBIBrokerageFactoryTests

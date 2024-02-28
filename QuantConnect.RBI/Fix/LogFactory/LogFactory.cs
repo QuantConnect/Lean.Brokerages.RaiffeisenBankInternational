@@ -16,7 +16,7 @@
 using System.Collections.Concurrent;
 using QuickFix;
 
-namespace QuantConnect.RBI.Fix.LogFactory;
+namespace QuantConnect.Brokerages.RBI.Fix.LogFactory;
 
 public class LogFactory : ILogFactory
 {

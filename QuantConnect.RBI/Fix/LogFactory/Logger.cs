@@ -16,7 +16,7 @@
 using QuickFix;
 using Log = QuantConnect.Logging.Log;
 
-namespace QuantConnect.RBI.Fix.LogFactory;
+namespace QuantConnect.Brokerages.RBI.Fix.LogFactory;
 
 public class Logger : ILog
 {

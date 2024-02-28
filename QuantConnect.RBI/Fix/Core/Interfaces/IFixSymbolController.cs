@@ -15,7 +15,7 @@
 
 using QuantConnect.Orders;
 
-namespace QuantConnect.RBI.Fix.Core.Interfaces;
+namespace QuantConnect.Brokerages.RBI.Fix.Core.Interfaces;
 
 public interface IFixSymbolController
 {
