@@ -24,20 +24,18 @@ using QuantConnect.Orders;
 using QuantConnect.Packets;
 using QuantConnect.Interfaces;
 using QuantConnect.Securities;
-using QuantConnect.Brokerages;
-using QuantConnect.Configuration;
 using QuantConnect.Orders.Fees;
-using QuantConnect.RBI.Fix;
-using QuantConnect.RBI.Fix.Core.Implementations;
-using QuantConnect.RBI.Fix.Core.Interfaces;
-using QuantConnect.RBI.Fix.Utils;
+using QuantConnect.Brokerages.RBI.Fix;
+using QuantConnect.Brokerages.RBI.Fix.Core.Implementations;
+using QuantConnect.Brokerages.RBI.Fix.Core.Interfaces;
+using QuantConnect.Brokerages.RBI.Fix.Utils;
 using QuantConnect.Util;
 using QuickFix.FIX42;
 using RestSharp;
 using Log = QuantConnect.Logging.Log;
 using QuickFix.Fields;
 
-namespace QuantConnect.RBI
+namespace QuantConnect.Brokerages.RBI
 {
     [BrokerageFactory(typeof(RBIBrokerageFactory))]
     public class RBIBrokerage : Brokerage

@@ -16,14 +16,14 @@
 using System.Globalization;
 using QuantConnect.Logging;
 using QuantConnect.Orders;
-using QuantConnect.RBI.Fix.Connection.Interfaces;
-using QuantConnect.RBI.Fix.Core.Interfaces;
-using QuantConnect.RBI.Fix.Utils;
+using QuantConnect.Brokerages.RBI.Fix.Connection.Interfaces;
+using QuantConnect.Brokerages.RBI.Fix.Core.Interfaces;
+using QuantConnect.Brokerages.RBI.Fix.Utils;
 using QuantConnect.Securities;
 using QuickFix.Fields;
 using QuickFix.FIX42;
 
-namespace QuantConnect.RBI.Fix.Core.Implementations;
+namespace QuantConnect.Brokerages.RBI.Fix.Core.Implementations;
 
 public class FixSymbolController : IFixSymbolController
 {

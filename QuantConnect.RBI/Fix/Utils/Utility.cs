@@ -19,7 +19,7 @@ using QuickFix.Fields;
 using QuickFix.FIX42;
 using TimeInForce = QuantConnect.Orders.TimeInForce;
 
-namespace QuantConnect.RBI.Fix.Utils
+namespace QuantConnect.Brokerages.RBI.Fix.Utils
 {
     public static class Utility
     {

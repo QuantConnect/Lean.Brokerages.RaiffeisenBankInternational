@@ -16,7 +16,7 @@
 using QuantConnect.Configuration;
 using QuickFix;
 
-namespace QuantConnect.RBI.Fix;
+namespace QuantConnect.Brokerages.RBI.Fix;
 
 public class FixConfiguration
 {

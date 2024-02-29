@@ -13,7 +13,7 @@
  * limitations under the License.
 */
 
-using QuantConnect.RBI.Fix.Core.Interfaces;
+using QuantConnect.Brokerages.RBI.Fix.Core.Interfaces;
 using QuantConnect.Securities;
 using QuantConnect.Util;
 using QuickFix;
@@ -23,7 +23,7 @@ using QuickFix.Transport;
 using Log = QuantConnect.Logging.Log;
 using Message = QuickFix.Message;
 
-namespace QuantConnect.RBI.Fix;
+namespace QuantConnect.Brokerages.RBI.Fix;
 
 public class FixInstance : MessageCracker, IApplication, IDisposable
 {

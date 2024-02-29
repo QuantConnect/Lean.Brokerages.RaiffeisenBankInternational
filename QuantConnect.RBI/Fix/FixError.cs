@@ -1,4 +1,4 @@
-﻿namespace QuantConnect.RBI.Fix;
+﻿namespace QuantConnect.Brokerages.RBI.Fix;
 
 /// <summary>
 /// Class is used to return error message from FIX protocol pipeline

@@ -38,4 +38,4 @@ jobs:
         run: dotnet build /p:Configuration=Release /v:quiet /p:WarningLevel=1 QuantConnect.RBI.sln
 
       - name: Run Tests
-        run: dotnet test ./QuantConnect.RBI.Tests/bin/Release/QuantConnect.RBI.Tests.dll
+        run: dotnet test ./QuantConnect.RBI.Tests/bin/Release/QuantConnect.Brokerages.RBI.Tests.dll

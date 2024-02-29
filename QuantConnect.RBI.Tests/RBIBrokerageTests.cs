@@ -23,10 +23,10 @@ using QuantConnect.Configuration;
 using QuantConnect.Tests;
 using QuantConnect.Orders;
 using QuantConnect.Packets;
-using QuantConnect.RBI.Fix;
+using QuantConnect.Brokerages.RBI.Fix;
 using QuantConnect.Tests.Brokerages;
 
-namespace QuantConnect.RBI.Tests
+namespace QuantConnect.Brokerages.RBI.Tests
 {
     [TestFixture]
     [Ignore("Requires valid config.json")]

@@ -13,10 +13,10 @@
  * limitations under the License.
 */
 
-using QuantConnect.RBI.Fix.Connection.Interfaces;
+using QuantConnect.Brokerages.RBI.Fix.Connection.Interfaces;
 using QuickFix;
 
-namespace QuantConnect.RBI.Fix.Connection.Implementations;
+namespace QuantConnect.Brokerages.RBI.Fix.Connection.Implementations;
 
 public class RBIFixConnection : IRBIFixConnection
 {

@@ -14,15 +14,14 @@
 */
 
 using QuantConnect.Packets;
-using QuantConnect.Brokerages;
 using QuantConnect.Interfaces;
 using QuantConnect.Securities;
 using QuantConnect.Configuration;
 using QuantConnect.Logging;
-using QuantConnect.RBI.Fix;
+using QuantConnect.Brokerages.RBI.Fix;
 using QuantConnect.Util;
 
-namespace QuantConnect.RBI
+namespace QuantConnect.Brokerages.RBI
 {
     /// <summary>
     /// Provides a template implementation of BrokerageFactory

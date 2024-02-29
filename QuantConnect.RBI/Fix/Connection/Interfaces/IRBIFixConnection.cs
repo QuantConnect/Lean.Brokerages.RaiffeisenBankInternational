@@ -15,7 +15,7 @@
 
 using QuickFix;
 
-namespace QuantConnect.RBI.Fix.Connection.Interfaces;
+namespace QuantConnect.Brokerages.RBI.Fix.Connection.Interfaces;
 
 public interface IRBIFixConnection
 {

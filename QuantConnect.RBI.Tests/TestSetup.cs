@@ -21,7 +21,7 @@ using QuantConnect.Logging;
 using QuantConnect.Configuration;
 using QuantConnect.Tests;
 
-namespace QuantConnect.RBI.Tests
+namespace QuantConnect.Brokerages.RBI.Tests
 {
     [TestFixture]
     public class TestSetup

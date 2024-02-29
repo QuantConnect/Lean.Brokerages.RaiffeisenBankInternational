@@ -9,9 +9,10 @@
         <Copyright>Copyright ©  2021</Copyright>
         <TestProjectType>UnitTest</TestProjectType>
         <OutputPath>bin\$(Configuration)\</OutputPath>
-        <Product>QuantConnect.RBI.Tests</Product>
-        <RootNamespace>QuantConnect.RBI.Tests</RootNamespace>
-        <AssemblyTitle>QuantConnect.RBI.Tests</AssemblyTitle>
+        <Product>QuantConnect.Brokerages.RBI.Tests</Product>
+        <RootNamespace>QuantConnect.Brokerages.RBI.Tests</RootNamespace>
+        <AssemblyTitle>QuantConnect.Brokerages.RBI.Tests</AssemblyTitle>
+		<AssemblyName>QuantConnect.Brokerages.RBI.Tests</AssemblyName>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     </PropertyGroup>
 
