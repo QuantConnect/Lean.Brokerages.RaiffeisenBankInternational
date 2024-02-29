@@ -12,6 +12,7 @@
         <Product>QuantConnect.Brokerages.RBI.Tests</Product>
         <RootNamespace>QuantConnect.Brokerages.RBI.Tests</RootNamespace>
         <AssemblyTitle>QuantConnect.Brokerages.RBI.Tests</AssemblyTitle>
+		<AssemblyName>QuantConnect.Brokerages.RBI.Tests</AssemblyName>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     </PropertyGroup>
 
