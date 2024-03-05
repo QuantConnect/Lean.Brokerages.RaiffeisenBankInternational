@@ -103,8 +103,6 @@ namespace QuantConnect.Brokerages.RBI
                 algorithm.Transactions,
                 algorithm,
                 job,
-                Composer.Instance.GetExportedValueByTypeName<IMapFileProvider>(Config.Get("map-file-provider",
-                    "QuantConnect.Data.Auxiliary.LocalDiskMapFileProvider")),
                 algorithm.Portfolio,
                 logFixMessages
             );
