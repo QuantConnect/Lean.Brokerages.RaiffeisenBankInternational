@@ -54,7 +54,6 @@ namespace QuantConnect.Brokerages.RBI
             IOrderProvider orderProvider,
             IAlgorithm algorithm,
             LiveNodePacket job,
-            IMapFileProvider mapFileProvider,
             ISecurityProvider securityProvider,
             bool logFixMessages) : base("RBI")
         {
@@ -62,6 +61,7 @@ namespace QuantConnect.Brokerages.RBI
             _job = job;
             _orderProvider = orderProvider;
 
+            var mapFileProvider = Composer.Instance.GetPart<IMapFileProvider>();
             var symbolMapper = new RBISymbolMapper(mapFileProvider);
 
             _fixBrokerageController = new FixBrokerageController();
