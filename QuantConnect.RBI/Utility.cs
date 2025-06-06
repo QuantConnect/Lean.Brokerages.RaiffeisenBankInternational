@@ -13,77 +13,13 @@
  * limitations under the License.
 */
 
-using QuantConnect.Logging;
 using QuantConnect.Orders;
-using QuickFix.Fields;
-using QuickFix.FIX42;
 using TimeInForce = QuantConnect.Orders.TimeInForce;
 
-namespace QuantConnect.Brokerages.RBI.Fix.Utils
+namespace QuantConnect.Brokerages.RBI
 {
     public static class Utility
     {
-        public static OrderType ConvertOrderType(char orderType)
-        {
-            switch (orderType)
-            {
-                case OrdType.MARKET:
-                    return OrderType.Market;
-
-                case OrdType.LIMIT:
-                    return OrderType.Limit;
-
-                case OrdType.STOP:
-                    return OrderType.StopMarket;
-
-                case OrdType.STOP_LIMIT:
-                    return OrderType.StopLimit;
-
-                default:
-                    throw new NotSupportedException($"Unsupported order type: {orderType}");
-            }
-        }
-        
-        public static OrderStatus ConvertOrderStatus(ExecutionReport execution)
-        {
-            var execType = execution.ExecType.getValue();
-            if (execType == ExecType.ORDER_STATUS)
-            {
-                execType = execution.OrdStatus.getValue();
-            }
-
-            switch (execType)
-            {
-                case ExecType.NEW:
-                    return OrderStatus.Submitted;
-
-                case ExecType.CANCELLED:
-                    return OrderStatus.Canceled;
-
-                case ExecType.REPLACED:
-                    return OrderStatus.UpdateSubmitted;
-
-                case ExecType.PARTIAL_FILL:
-                    return OrderStatus.PartiallyFilled;
-
-                case ExecType.FILL:
-                    return OrderStatus.Filled;
-
-                case ExecType.PENDING_NEW:
-                    return OrderStatus.New;
-
-                case ExecType.PENDING_CANCEL:
-                    return OrderStatus.CancelPending;
-
-                case ExecType.REJECTED:
-                    return OrderStatus.Invalid;
-
-                default:
-                    Log.Error($"RBIBrokerage(): unsupported ExecType: {execType}");
-                    return OrderStatus.Invalid;
-            }
-        }
-        
         public static QuickFix.Fields.TimeInForce ConvertTimeInForce(TimeInForce timeInForce, OrderType orderType)
         {
             if (timeInForce == TimeInForce.GoodTilCanceled)

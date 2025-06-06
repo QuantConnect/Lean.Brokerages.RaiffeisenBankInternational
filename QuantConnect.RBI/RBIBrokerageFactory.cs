@@ -18,8 +18,7 @@ using QuantConnect.Interfaces;
 using QuantConnect.Securities;
 using QuantConnect.Configuration;
 using QuantConnect.Logging;
-using QuantConnect.Brokerages.RBI.Fix;
-using QuantConnect.Util;
+using QuantConnect.Brokerages.Fix;
 
 namespace QuantConnect.Brokerages.RBI
 {
@@ -83,15 +82,11 @@ namespace QuantConnect.Brokerages.RBI
                 Account = Read<string>(job.BrokerageData, "rbi-account", errors),
                 SenderCompId = Read<string>(job.BrokerageData, "rbi-sender-comp-id", errors),
                 TargetCompId = Read<string>(job.BrokerageData, "rbi-target-comp-id", errors),
-                OnBehalfOfCompID = Read<string>(job.BrokerageData, "rbi-on-behalf-of-comp-id", errors)
+                OnBehalfOfCompID = Read<string>(job.BrokerageData, "rbi-on-behalf-of-comp-id", errors),
+                LogFixMessages = Read<bool>(job.BrokerageData, "rbi-log-fix-messages", new List<string>())
             };
             
-            var logFixMessages = Read<bool>(job.BrokerageData, "rbi-log-fix-messages", new List<string>());
-
-            Log.Trace(
-                $"RBIBrokerageFactory.CreateBrokerage(): Host {fixConfig.Host}, Port {fixConfig.Port}, Account {fixConfig.Account}" +
-                $" SenderCompId {fixConfig.SenderCompId}, TargetCompId {fixConfig.TargetCompId}," +
-                $" OnBehalfOfCompId {fixConfig.OnBehalfOfCompID}. LogFixMessages {logFixMessages}");
+            Log.Trace($"RBIBrokerageFactory.CreateBrokerage(): {fixConfig}");
 
             if (errors.Count > 0)
             {
@@ -103,9 +98,7 @@ namespace QuantConnect.Brokerages.RBI
                 algorithm.Transactions,
                 algorithm,
                 job,
-                algorithm.Portfolio,
-                logFixMessages
-            );
+                algorithm.Portfolio);
             
             return brokerage;
         }
