@@ -20,11 +20,10 @@ using System.Threading;
 using NUnit.Framework;
 using QuantConnect.Algorithm;
 using QuantConnect.Configuration;
-using QuantConnect.Tests;
 using QuantConnect.Orders;
 using QuantConnect.Packets;
-using QuantConnect.Brokerages.RBI.Fix;
 using QuantConnect.Tests.Brokerages;
+using QuantConnect.Brokerages.Fix;
 
 namespace QuantConnect.Brokerages.RBI.Tests
 {
@@ -164,7 +163,7 @@ namespace QuantConnect.Brokerages.RBI.Tests
 
         private RBIBrokerage CreateBrokerage()
         {
-            return new RBIBrokerage(_fixConfiguration, _orderProvider, _algorithm, _job, new SecurityProvider(), false);
+            return new RBIBrokerage(_fixConfiguration, _orderProvider, _algorithm, _job, new SecurityProvider());
         }
     }
 }
