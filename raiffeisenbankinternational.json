@@ -1,4 +1,7 @@
 {
+	"name" : "Raiffeisen Bank",
+	"logo-url" : "https://cdn.quantconnect.com/i/tu/rbi-brokerage-logo.svg",
+	"min-deposit" : "None",
 	"description": "Raiffeisen Bank International(RBI) offers trading access for clients based in eastern European countries. QuantConnect connects with RBI through a secure socket FIX connection. The connection is a low latency and sufficient for prop desks, professional traders, and quants.",
 	
 	"platforms-features": [
