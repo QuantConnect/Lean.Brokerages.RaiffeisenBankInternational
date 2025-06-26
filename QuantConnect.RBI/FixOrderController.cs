@@ -16,35 +16,25 @@
 using System.Globalization;
 using QuantConnect.Logging;
 using QuantConnect.Orders;
-using QuantConnect.Brokerages.RBI.Fix.Connection.Interfaces;
-using QuantConnect.Brokerages.RBI.Fix.Core.Interfaces;
-using QuantConnect.Brokerages.RBI.Fix.Utils;
-using QuantConnect.Securities;
 using QuickFix.Fields;
 using QuickFix.FIX42;
+using QuantConnect.Brokerages.Fix.Connection;
+using QuantConnect.Brokerages.Fix.Core.Interfaces;
 
-namespace QuantConnect.Brokerages.RBI.Fix.Core.Implementations;
+namespace QuantConnect.Brokerages.RBI;
 
-public class FixSymbolController : IFixSymbolController
+public class FixOrderController : IFixOrdersController
 {
-    private readonly IRBIFixConnection _session;
     private readonly RBISymbolMapper _symbolMapper;
     private readonly Account _account;
     private readonly ClientID _clientID;
 
-    public FixSymbolController(
-        IRBIFixConnection session,
-        IFixBrokerageController brokerageController,
-        ISecurityProvider securityProvider,
-        RBISymbolMapper mapper,
-        string account,
-        string onBehalfOfCompID
-        )
+    public IFixConnection Session { get; set; }
+
+    public FixOrderController(RBISymbolMapper mapper, string account, string onBehalfOfCompID)
     {
-        _session = session;
         _symbolMapper = mapper;
         _account = new Account(account);
-        brokerageController.Register(this);
         _clientID = new ClientID(onBehalfOfCompID);
     }
 
@@ -103,7 +93,7 @@ public class FixSymbolController : IFixSymbolController
         }
         order.BrokerId.Add(newOrder.ClOrdID.getValue());
         
-        return _session.Send(newOrder);
+        return Session.Send(newOrder);
     }
 
     public bool CancelOrder(Order order)
@@ -123,7 +113,7 @@ public class FixSymbolController : IFixSymbolController
         };
         order.BrokerId.Add(request.ClOrdID.getValue());
 
-        return _session.Send(request);
+        return Session.Send(request);
     }
 
     public bool UpdateOrder(Order order)
@@ -173,6 +163,6 @@ public class FixSymbolController : IFixSymbolController
         }
         order.BrokerId.Add(request.ClOrdID.getValue());
 
-        return _session.Send(request);
+        return Session.Send(request);
     }
 }
