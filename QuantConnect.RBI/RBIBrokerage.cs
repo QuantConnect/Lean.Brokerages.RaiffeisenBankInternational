@@ -21,6 +21,7 @@ using QuantConnect.Util;
 using QuickFix.FIX42;
 using QuickFix.Fields;
 using QuantConnect.Brokerages.Fix;
+using QuantConnect.Lean.Engine.Results;
 
 namespace QuantConnect.Brokerages.RBI
 {
@@ -39,6 +40,10 @@ namespace QuantConnect.Brokerages.RBI
             var symbolMapper = new RBISymbolMapper(mapFileProvider);
 
             InitializeFix(new FixOrderController(symbolMapper, config.Account, config.OnBehalfOfCompID));
+
+            DeploymentDetailsHelper.Add("rbi-account", config.Account);
+            DeploymentDetailsHelper.Add("rbi-on-behalf-of-comp-id", config.OnBehalfOfCompID);
+
             ValidateSubscription(297);
         }
 
